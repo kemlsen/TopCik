@@ -5,6 +5,7 @@ import '../models/difficulty_level.dart';
 import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/gradient_scaffold.dart';
 import '../widgets/grid_widget.dart';
 import '../widgets/lives_badge.dart';
 import '../widgets/target_number_widget.dart';
@@ -68,71 +69,68 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          widget.level.displayName,
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          TimerWidget(
-                            remainingSeconds: _controller.timeRemainingSeconds,
-                            totalSeconds: widget.level.timeLimitSeconds,
-                          ),
-                          Expanded(
-                            child: Center(
-                              child: TargetNumberWidget(
-                                targetNumber: _controller.targetNumber,
-                              ),
+    return GradientScaffold(
+      title: widget.level.displayName,
+      showFloatingSymbols: false,
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        TimerWidget(
+                          remainingSeconds: _controller.timeRemainingSeconds,
+                          totalSeconds: widget.level.timeLimitSeconds,
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: TargetNumberWidget(
+                              targetNumber: _controller.targetNumber,
                             ),
                           ),
-                          _ScoreBadge(score: _controller.score),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      LivesBadge(livesRemaining: _controller.livesRemaining),
-                    ],
-                  ),
+                        ),
+                        _ScoreBadge(score: _controller.score),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    LivesBadge(livesRemaining: _controller.livesRemaining),
+                  ],
                 ),
-                Expanded(child: GridWidget(controller: _controller)),
-                AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: _controller.wrongIndex != null ? 1.0 : 0.0,
-                  child: const Padding(
-                    padding: EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      'Yanlış! Tekrar dene 🙂',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.error,
-                      ),
+              ),
+              Expanded(child: GridWidget(controller: _controller)),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: _controller.wrongIndex != null ? 1.0 : 0.0,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'Yanlış! Tekrar dene 🙂',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: AppColors.error.withValues(alpha: 0.9),
+                          blurRadius: 10,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

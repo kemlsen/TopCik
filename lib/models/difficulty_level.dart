@@ -1,3 +1,7 @@
+import 'package:flutter/painting.dart' show Color;
+
+import '../theme/app_colors.dart';
+
 enum Operation { addition, subtraction, multiplication, division }
 
 extension OperationInfo on Operation {
@@ -81,6 +85,21 @@ extension DifficultyLevelInfo on DifficultyLevel {
           Operation.multiplication,
           Operation.division,
         ];
+    }
+  }
+
+  /// Brand rengi (seviye kartları, skor tablosu rozetleri vb. bu tek
+  /// kaynaktan renklenir).
+  Color get color {
+    switch (this) {
+      case DifficultyLevel.easy:
+        return AppColors.levelEasy;
+      case DifficultyLevel.medium:
+        return AppColors.levelMedium;
+      case DifficultyLevel.hard:
+        return AppColors.levelHard;
+      case DifficultyLevel.expert:
+        return AppColors.levelExpert;
     }
   }
 

@@ -6,6 +6,7 @@ import '../services/app_messenger.dart';
 import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/gradient_scaffold.dart';
 
 const _operationColors = {
   Operation.addition: AppColors.levelEasy,
@@ -77,74 +78,61 @@ class _OperationSelectScreenState extends State<OperationSelectScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          '${widget.mode.displayName} — İşlem Türü Seç',
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  _OperationTile(
-                    label: 'Hepsi',
-                    color: AppColors.primary,
-                    checked: _allSelected,
-                    onChanged: _toggleAll,
-                  ),
-                  const SizedBox(height: 12),
-                  ...Operation.values.map(
-                    (operation) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _OperationTile(
-                        label: '${operation.symbol}  ${operation.displayName}',
-                        color: _operationColors[operation]!,
-                        checked: _selected.contains(operation),
-                        onChanged: (value) =>
-                            _toggleOperation(operation, value),
-                      ),
+    return GradientScaffold(
+      title: '${widget.mode.displayName} — İşlem Türü Seç',
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+              children: [
+                _OperationTile(
+                  label: 'Hepsi',
+                  color: AppColors.cta,
+                  checked: _allSelected,
+                  onChanged: _toggleAll,
+                ),
+                const SizedBox(height: 12),
+                ...Operation.values.map(
+                  (operation) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _OperationTile(
+                      label: '${operation.symbol}  ${operation.displayName}',
+                      color: _operationColors[operation]!,
+                      checked: _selected.contains(operation),
+                      onChanged: (value) => _toggleOperation(operation, value),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _selected.isEmpty ? null : _saveAndReturnToMenu,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cta,
-                    disabledBackgroundColor: AppColors.cta.withValues(
-                      alpha: 0.4,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _selected.isEmpty ? null : _saveAndReturnToMenu,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.white.withValues(alpha: 0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'Kaydet',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
+                ),
+                child: const Text(
+                  'Kaydet',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -167,7 +155,10 @@ class _OperationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color,
-      borderRadius: BorderRadius.circular(20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
+      ),
       elevation: 3,
       child: CheckboxListTile(
         value: checked,

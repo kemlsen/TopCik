@@ -4,15 +4,8 @@ import '../models/difficulty_level.dart';
 import '../models/game_mode.dart';
 import '../services/audio_service.dart';
 import '../services/score_service.dart';
-import '../theme/app_colors.dart';
+import '../widgets/gradient_scaffold.dart';
 import 'operation_select_screen.dart';
-
-const _levelColors = {
-  DifficultyLevel.easy: AppColors.levelEasy,
-  DifficultyLevel.medium: AppColors.levelMedium,
-  DifficultyLevel.hard: AppColors.levelHard,
-  DifficultyLevel.expert: AppColors.levelExpert,
-};
 
 class LevelSelectScreen extends StatelessWidget {
   final GameMode mode;
@@ -44,33 +37,23 @@ class LevelSelectScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          '${mode.displayName} — Seviye Seç',
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: DifficultyLevel.values
-              .map(
-                (level) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _LevelCard(
-                    level: level,
-                    mode: mode,
-                    scoreService: scoreService,
-                    onTap: () => _startLevel(context, level),
-                  ),
+    return GradientScaffold(
+      title: '${mode.displayName} — Seviye Seç',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+        children: DifficultyLevel.values
+            .map(
+              (level) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _LevelCard(
+                  level: level,
+                  mode: mode,
+                  scoreService: scoreService,
+                  onTap: () => _startLevel(context, level),
                 ),
-              )
-              .toList(),
-        ),
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -91,10 +74,13 @@ class _LevelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _levelColors[level]!;
+    final color = level.color;
     return Material(
       color: color,
-      borderRadius: BorderRadius.circular(20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
+      ),
       elevation: 4,
       shadowColor: color.withValues(alpha: 0.6),
       child: InkWell(

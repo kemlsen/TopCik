@@ -4,6 +4,7 @@ import '../models/game_mode.dart';
 import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/gradient_scaffold.dart';
 import 'level_select_screen.dart';
 
 const _modeColors = {
@@ -31,39 +32,29 @@ class ModeSelectScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Mod Seç',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: GameMode.values
-              .map(
-                (mode) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _ModeCard(
-                    mode: mode,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => LevelSelectScreen(
-                          mode: mode,
-                          audioService: audioService,
-                          scoreService: scoreService,
-                        ),
+    return GradientScaffold(
+      title: 'Mod Seç',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+        children: GameMode.values
+            .map(
+              (mode) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _ModeCard(
+                  mode: mode,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => LevelSelectScreen(
+                        mode: mode,
+                        audioService: audioService,
+                        scoreService: scoreService,
                       ),
                     ),
                   ),
                 ),
-              )
-              .toList(),
-        ),
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -80,7 +71,10 @@ class _ModeCard extends StatelessWidget {
     final color = _modeColors[mode]!;
     return Material(
       color: color,
-      borderRadius: BorderRadius.circular(20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
+      ),
       elevation: 4,
       shadowColor: color.withValues(alpha: 0.6),
       child: InkWell(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/audio_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/gradient_scaffold.dart';
 
 class SettingsScreen extends StatefulWidget {
   final AudioService audioService;
@@ -25,38 +26,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Ayarlar', style: TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            _SettingSwitch(
-              label: 'Ses Efektleri',
-              icon: Icons.volume_up_rounded,
-              value: _soundEnabled,
-              onChanged: (value) {
-                setState(() => _soundEnabled = value);
-                widget.audioService.setSoundEnabled(value);
-              },
-            ),
-            const SizedBox(height: 16),
-            _SettingSwitch(
-              label: 'Arka Plan Müziği',
-              icon: Icons.music_note_rounded,
-              value: _musicEnabled,
-              onChanged: (value) {
-                setState(() => _musicEnabled = value);
-                widget.audioService.setMusicEnabled(value);
-              },
-            ),
-          ],
-        ),
+    return GradientScaffold(
+      title: 'Ayarlar',
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+        children: [
+          _SettingSwitch(
+            label: 'Ses Efektleri',
+            icon: Icons.volume_up_rounded,
+            value: _soundEnabled,
+            onChanged: (value) {
+              setState(() => _soundEnabled = value);
+              widget.audioService.setSoundEnabled(value);
+            },
+          ),
+          const SizedBox(height: 16),
+          _SettingSwitch(
+            label: 'Arka Plan Müziği',
+            icon: Icons.music_note_rounded,
+            value: _musicEnabled,
+            onChanged: (value) {
+              setState(() => _musicEnabled = value);
+              widget.audioService.setMusicEnabled(value);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -80,17 +74,30 @@ class _SettingSwitch extends StatelessWidget {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(18),
-      elevation: 2,
+      elevation: 3,
+      shadowColor: AppColors.levelExpert.withValues(alpha: 0.5),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, size: 28, color: AppColors.levelExpert),
-            const SizedBox(width: 16),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.levelExpert.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 24, color: AppColors.levelExpert),
+            ),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             Switch(
