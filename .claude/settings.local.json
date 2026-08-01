@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/c/Users/kemal/AppData/Local/Android/Sdk/platform-tools/adb.exe devices *)",
+      "Read(//c/Users/kemal/AppData/Local/Temp/claude/**)",
+      "Read(//c/Users/kemal/.android/avd/Pixel_6_MathGrid.avd/**)",
+      "Bash(powershell -NoProfile -Command \"Get-CimInstance Win32_Process -Filter \\\\\"Name='qemu-system-x86_64.exe'\\\\\" | Select-Object -ExpandProperty CommandLine\")",
+      "Bash(taskkill //IM qemu-system-x86_64.exe //F)",
+      "Bash(taskkill //IM emulator.exe //F)",
+      "Bash(flutter --version)",
+      "Bash(flutter doctor *)",
+      "Bash(flutter analyze *)",
+      "Bash(flutter test *)",
+      "Bash(flutter devices *)",
+      "Bash(adb devices *)",
+      "Bash(flutter run *)",
+      "PowerShell(flutter run *)",
+      "Bash(adb shell *)",
+      "Bash(flutter build *)",
+      "PowerShell(flutter build *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git ls-remote *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
