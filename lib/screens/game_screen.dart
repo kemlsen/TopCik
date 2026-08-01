@@ -71,7 +71,6 @@ class _GameScreenState extends State<GameScreen> {
   Widget build(BuildContext context) {
     return GradientScaffold(
       title: widget.level.displayName,
-      showFloatingSymbols: false,
       body: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {

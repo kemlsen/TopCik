@@ -74,7 +74,6 @@ class _MatchGameScreenState extends State<MatchGameScreen> {
   Widget build(BuildContext context) {
     return GradientScaffold(
       title: '${widget.level.displayName} · Eşleştirme',
-      showFloatingSymbols: false,
       body: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {
