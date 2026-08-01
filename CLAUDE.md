@@ -80,7 +80,7 @@ Sayı Avı moduna ek olarak, aynı seviye/işlem türü seçim akışını payla
 - Can, süre, skor (kombo + hız bonusu) ve seviye/işlem türü seçimi Sayı Avı moduyla birebir aynı mekanikleri kullanır (bkz. Bölüm 6, 7).
 - En iyi skorlar moda göre ayrı tutulur (Sayı Avı ve Eşleştirme'nin skor tabloları birbirinden bağımsızdır).
 
-**Uygulama:** `lib/logic/match_game_controller.dart` (`MatchGameController`), grid üretimi `lib/logic/problem_generator.dart` içindeki `generateMatchGrid`/`_forAnswer`, ekranlar `lib/screens/match_game_screen.dart` ve `lib/screens/match_result_screen.dart`. Ana menüdeki "Eşleştirme Modu" butonundan başlar, aynı Seviye Seç / İşlem Türü Seç ekranlarını (artık `GameMode` parametresiyle) kullanır.
+**Uygulama:** `lib/logic/match_game_controller.dart` (`MatchGameController`), grid üretimi `lib/logic/problem_generator.dart` içindeki `generateMatchGrid`/`_forAnswer`, ekranlar `lib/screens/match_game_screen.dart` ve `lib/screens/match_result_screen.dart`. Ana menüdeki "Mod Seç" butonuyla açılan `ModeSelectScreen`'den (bkz. Bölüm 10) seçilir, aynı Seviye Seç / İşlem Türü Seç ekranlarını (`GameMode` parametresiyle) kullanır.
 
 ---
 
@@ -150,14 +150,15 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 
 ## 10. Ekranlar (Screens)
 
-1. **Ana Menü:** Oyna (Sayı Avı hızlı başlat), Seviye Seç (Sayı Avı), Eşleştirme Modu, Skor Tablosu, Ayarlar.
-2. **Seviye Seçim Ekranı:** Kolay / Orta / Zor / Uzman kartları. Hem Sayı Avı hem Eşleştirme modu bu ekranı `GameMode` parametresiyle paylaşır.
-3. **İşlem Türü Seç Ekranı:** Toplama/Çıkarma/Çarpma/Bölme seçimi; iki mod tarafından da paylaşılır.
-4. **Oyun Ekranı (Sayı Avı):** 4x4 grid + üstte hedef sayı + süre sayacı + skor.
-5. **Oyun Ekranı (Eşleştirme):** 4x4 grid + üstte kalan çift sayısı + süre sayacı + skor (bkz. Bölüm 3a).
-6. **Sonuç Ekranı:** Toplam skor, doğru/yanlış (veya eşleşen çift/yanlış deneme) sayısı, en iyi skor, "Tekrar Oyna" / "Ana Menü" butonları. Her modun kendi sonuç ekranı vardır.
-7. **Skor Tablosu:** Her iki modun (Sayı Avı, Eşleştirme) seviye başına en iyi skorlarını ayrı ayrı gösterir.
-8. **Ayarlar:** Ses aç/kapa, zorluk varsayılanı, dil seçimi (opsiyonel çoklu dil desteği).
+1. **Ana Menü:** Oyna (en son oynanan mod + seviyeyle hızlı başlat), Mod Seç, Skor Tablosu, Ayarlar.
+2. **Mod Seçim Ekranı (uygulandı):** "Seviye Seç" (Sayı Avı) ve "Eşleştirme Modu" butonlarının birleştiği tek giriş noktası — oyuncu önce Sayı Avı / Eşleştirme kartlarından birine dokunur, ardından ortak Seviye Seçim Ekranı'na yönlenir. Daha önce bu iki mod ana menüde ayrı butonlardan (ve "Oyna" her zaman doğrudan Sayı Avı'na atlayarak) seçiliyordu; bu tutarsızlık giderildi. Uygulama: `lib/screens/mode_select_screen.dart` (`ModeSelectScreen`).
+3. **Seviye Seçim Ekranı:** Kolay / Orta / Zor / Uzman kartları. Hem Sayı Avı hem Eşleştirme modu bu ekranı `GameMode` parametresiyle paylaşır. Bir seviye seçildiğinde hem seviye hem mod "son oynanan" olarak kaydedilir (`ScoreService.setLastLevel` / `setLastMode`) — Ana Menü'deki "Oyna" butonu bu kaydı kullanır.
+4. **İşlem Türü Seç Ekranı:** Toplama/Çıkarma/Çarpma/Bölme seçimi; iki mod tarafından da paylaşılır.
+5. **Oyun Ekranı (Sayı Avı):** 4x4 grid + üstte hedef sayı + süre sayacı + skor.
+6. **Oyun Ekranı (Eşleştirme):** 4x4 grid + üstte kalan çift sayısı + süre sayacı + skor (bkz. Bölüm 3a).
+7. **Sonuç Ekranı:** Toplam skor, doğru/yanlış (veya eşleşen çift/yanlış deneme) sayısı, en iyi skor, "Tekrar Oyna" / "Ana Menü" butonları. Her modun kendi sonuç ekranı vardır.
+8. **Skor Tablosu:** Her iki modun (Sayı Avı, Eşleştirme) seviye başına en iyi skorlarını ayrı ayrı gösterir.
+9. **Ayarlar:** Ses aç/kapa, zorluk varsayılanı, dil seçimi (opsiyonel çoklu dil desteği).
 
 ---
 
@@ -191,6 +192,7 @@ lib/
     grid_playable.dart          // GridWidget'ın ihtiyaç duyduğu ortak arayüz
   screens/
     main_menu_screen.dart
+    mode_select_screen.dart      // "Oyna" ve mod seçiminin tek giriş noktası
     level_select_screen.dart     // mode: GameMode parametresiyle her iki mod için de kullanılır
     operation_select_screen.dart // mode: GameMode parametresiyle her iki mod için de kullanılır
     game_screen.dart             // Sayı Avı oyun ekranı

@@ -7,8 +7,9 @@ import 'package:mathgrid/services/audio_service.dart';
 import 'package:mathgrid/services/score_service.dart';
 
 void main() {
-  testWidgets('Main menu shows Oyna, Seviye Seç, Skor Tablosu ve Ayarlar',
-      (tester) async {
+  testWidgets('Main menu shows Oyna, Mod Seç, Skor Tablosu ve Ayarlar', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
 
     await tester.pumpWidget(
@@ -22,7 +23,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Oyna'), findsOneWidget);
-    expect(find.text('Seviye Seç'), findsOneWidget);
+    expect(find.text('Mod Seç'), findsOneWidget);
     expect(find.text('Skor Tablosu'), findsOneWidget);
     expect(find.text('Ayarlar'), findsOneWidget);
   });

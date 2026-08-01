@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../models/game_mode.dart';
 import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_symbols_background.dart';
-import 'level_select_screen.dart';
+import 'mode_select_screen.dart';
 import 'scoreboard_screen.dart';
 import 'settings_screen.dart';
 import 'operation_select_screen.dart';
@@ -22,12 +21,13 @@ class MainMenuScreen extends StatelessWidget {
 
   Future<void> _quickPlay(BuildContext context) async {
     final level = await scoreService.getLastLevel();
+    final mode = await scoreService.getLastMode();
     if (!context.mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => OperationSelectScreen(
           level: level,
-          mode: GameMode.hunt,
+          mode: mode,
           audioService: audioService,
           scoreService: scoreService,
         ),
@@ -82,28 +82,12 @@ class MainMenuScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
                         _MenuButton(
-                          label: 'Seviye Seç',
+                          label: 'Mod Seç',
                           icon: Icons.grid_view_rounded,
                           color: AppColors.levelMedium,
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => LevelSelectScreen(
-                                mode: GameMode.hunt,
-                                audioService: audioService,
-                                scoreService: scoreService,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _MenuButton(
-                          label: 'Eşleştirme Modu',
-                          icon: Icons.join_full_rounded,
-                          color: AppColors.levelHard,
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => LevelSelectScreen(
-                                mode: GameMode.match,
+                              builder: (_) => ModeSelectScreen(
                                 audioService: audioService,
                                 scoreService: scoreService,
                               ),

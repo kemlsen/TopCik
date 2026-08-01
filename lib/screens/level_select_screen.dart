@@ -28,6 +28,7 @@ class LevelSelectScreen extends StatelessWidget {
 
   Future<void> _startLevel(BuildContext context, DifficultyLevel level) async {
     await scoreService.setLastLevel(level);
+    await scoreService.setLastMode(mode);
     if (!context.mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(

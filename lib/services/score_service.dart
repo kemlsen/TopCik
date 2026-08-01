@@ -9,6 +9,7 @@ import '../models/game_mode.dart';
 /// namespaced key.
 class ScoreService {
   static const _lastLevelKey = 'last_level';
+  static const _lastModeKey = 'last_mode';
 
   String _bestScoreKey(DifficultyLevel level, GameMode mode) {
     return mode == GameMode.hunt
@@ -28,6 +29,23 @@ class ScoreService {
   Future<void> setLastLevel(DifficultyLevel level) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_lastLevelKey, level.name);
+  }
+
+  /// Oyuncunun en son oynadığı modu döner (varsayılan: Sayı Avı). Ana
+  /// menüdeki "Oyna" hızlı başlatma butonu, en son seçilen mod + seviye
+  /// kombinasyonuna devam etmek için bunu kullanır.
+  Future<GameMode> getLastMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString(_lastModeKey);
+    return GameMode.values.firstWhere(
+      (m) => m.name == name,
+      orElse: () => GameMode.hunt,
+    );
+  }
+
+  Future<void> setLastMode(GameMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastModeKey, mode.name);
   }
 
   Future<int> getBestScore(
