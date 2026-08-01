@@ -5,6 +5,7 @@ import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_symbols_background.dart';
+import '../widgets/math_logo_emblem.dart';
 import 'game_screen.dart';
 import 'match_game_screen.dart';
 import 'mode_select_screen.dart';
@@ -68,7 +69,7 @@ class MainMenuScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('🦉', style: TextStyle(fontSize: 64)),
+                        const MathLogoEmblem(size: 128),
                         const SizedBox(height: 6),
                         const Text(
                           'TopCik',
