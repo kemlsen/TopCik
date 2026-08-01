@@ -135,6 +135,7 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 - **Hedef sayı gösterimi:** Ekranın üstünde büyük, renkli, dikkat çekici bir kutu içinde (örn: "Bul: 12").
 - **Renk paleti:** Çocuklara hitap eden canlı, pastel-parlak renkler (mavi, sarı, turuncu, yeşil). Kırmızı sadece yanlış cevap için kullanılmalı.
 - **Karakter/Maskot (opsiyonel ama önerilir):** Basit bir maskot (örn. bir baykuş/robot) doğru/yanlış cevaplara tepki versin (mutlu zıplama / üzgün sallama).
+- **Yüzen sembol arka planı (uygulandı):** Mor gradientli ekranlarda (Ana Menü, Sonuç Ekranları) içeriğin arkasında, çok düşük opaklıkta (≈%8-19) küçük `+ − × ÷` sembolleri yavaşça süzülür — hafif dikey/yatay sürüklenme + yumuşak dönüş, sabit rastgele tohumla (aynı dağılım her açılışta), tek bir sonsuz döngü `AnimationController` ile (sin/cos tabanlı, ek paket gerektirmez). Dokunma olaylarını engellememesi için `IgnorePointer` ile sarılıdır. Uygulama: `lib/widgets/floating_symbols_background.dart` (`FloatingSymbolsBackground`), `main_menu_screen.dart`, `result_screen.dart` ve `match_result_screen.dart` içinde gradient `Container`'ın `Stack` çocuğu olarak, `SafeArea` içeriğinin arkasında kullanılır.
 
 ---
 
