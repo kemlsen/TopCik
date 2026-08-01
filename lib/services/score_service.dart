@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/difficulty_level.dart';
 import '../models/game_mode.dart';
 
+const _operationSeparator = ',';
+
 /// Persists best scores per difficulty level and game mode locally
 /// (Bölüm 6, 13). Sayı Avı modu keeps its original (pre-Eşleştirme modu)
 /// key so existing best scores aren't lost; Eşleştirme modu gets its own
@@ -10,6 +12,7 @@ import '../models/game_mode.dart';
 class ScoreService {
   static const _lastLevelKey = 'last_level';
   static const _lastModeKey = 'last_mode';
+  static const _lastOperationsKey = 'last_operations';
 
   String _bestScoreKey(DifficultyLevel level, GameMode mode) {
     return mode == GameMode.hunt
@@ -46,6 +49,31 @@ class ScoreService {
   Future<void> setLastMode(GameMode mode) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_lastModeKey, mode.name);
+  }
+
+  /// Oyuncunun en son İşlem Türü Seç ekranında bıraktığı seçimi döner.
+  /// Hiç kaydedilmemişse [level]'in varsayılan işlem seti kullanılır (bkz.
+  /// `DifficultyLevel.operations`), yani Ana Menü'deki "Oyna" ilk açılışta
+  /// bile mantıklı bir kombinasyonla başlar.
+  Future<Set<Operation>> getLastOperations(DifficultyLevel level) async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_lastOperationsKey);
+    if (stored == null || stored.isEmpty) {
+      return level.operations.toSet();
+    }
+    final names = stored.split(_operationSeparator);
+    final operations = Operation.values
+        .where((o) => names.contains(o.name))
+        .toSet();
+    return operations.isEmpty ? level.operations.toSet() : operations;
+  }
+
+  Future<void> setLastOperations(Set<Operation> operations) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _lastOperationsKey,
+      operations.map((o) => o.name).join(_operationSeparator),
+    );
   }
 
   Future<int> getBestScore(

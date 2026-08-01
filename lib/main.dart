@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'screens/main_menu_screen.dart';
+import 'services/app_messenger.dart';
 import 'services/audio_service.dart';
 import 'services/score_service.dart';
 import 'theme/app_colors.dart';
@@ -43,6 +44,7 @@ class _TopCikAppState extends State<TopCikApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'TopCik - Sayı Avı',
+      scaffoldMessengerKey: scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -66,9 +68,7 @@ class _SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: AppColors.primary,
-      body: Center(
-        child: CircularProgressIndicator(color: Colors.white),
-      ),
+      body: Center(child: CircularProgressIndicator(color: Colors.white)),
     );
   }
 }

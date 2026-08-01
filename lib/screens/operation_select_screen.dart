@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../models/difficulty_level.dart';
 import '../models/game_mode.dart';
+import '../services/app_messenger.dart';
 import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
-import 'game_screen.dart';
-import 'match_game_screen.dart';
 
 const _operationColors = {
   Operation.addition: AppColors.levelEasy,
@@ -64,23 +63,15 @@ class _OperationSelectScreenState extends State<OperationSelectScreen> {
     });
   }
 
-  void _start() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => widget.mode == GameMode.hunt
-            ? GameScreen(
-                level: widget.level,
-                operations: _selected,
-                audioService: widget.audioService,
-                scoreService: widget.scoreService,
-              )
-            : MatchGameScreen(
-                level: widget.level,
-                operations: _selected,
-                audioService: widget.audioService,
-                scoreService: widget.scoreService,
-              ),
-      ),
+  /// Seçimi kaydeder ve Ana Menü'ye döner — oyun buradan başlamaz. Oyuncu,
+  /// bu mod + seviye + işlem türü kombinasyonuyla oynamak için Ana
+  /// Menü'deki "Oyna" butonuna basar (bkz. `MainMenuScreen._quickPlay`).
+  Future<void> _saveAndReturnToMenu() async {
+    await widget.scoreService.setLastOperations(_selected);
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      const SnackBar(content: Text('Hazır! Başlamak için "Oyna"ya dokun 🎮')),
     );
   }
 
@@ -131,7 +122,7 @@ class _OperationSelectScreenState extends State<OperationSelectScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _selected.isEmpty ? null : _start,
+                  onPressed: _selected.isEmpty ? null : _saveAndReturnToMenu,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.cta,
                     disabledBackgroundColor: AppColors.cta.withValues(
@@ -142,7 +133,7 @@ class _OperationSelectScreenState extends State<OperationSelectScreen> {
                     ),
                   ),
                   child: const Text(
-                    'Başla',
+                    'Kaydet',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,

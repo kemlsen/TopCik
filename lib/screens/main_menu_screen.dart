@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../models/game_mode.dart';
 import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_symbols_background.dart';
+import 'game_screen.dart';
+import 'match_game_screen.dart';
 import 'mode_select_screen.dart';
 import 'scoreboard_screen.dart';
 import 'settings_screen.dart';
-import 'operation_select_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
   final AudioService audioService;
@@ -19,18 +21,29 @@ class MainMenuScreen extends StatelessWidget {
     required this.scoreService,
   });
 
+  /// "Oyna": Mod Seç ekranında (veya bir önceki oyunda) bırakılan mod +
+  /// seviye + işlem türü kombinasyonuyla, ara ekranlar olmadan doğrudan
+  /// oyunu başlatır.
   Future<void> _quickPlay(BuildContext context) async {
     final level = await scoreService.getLastLevel();
     final mode = await scoreService.getLastMode();
+    final operations = await scoreService.getLastOperations(level);
     if (!context.mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => OperationSelectScreen(
-          level: level,
-          mode: mode,
-          audioService: audioService,
-          scoreService: scoreService,
-        ),
+        builder: (_) => mode == GameMode.hunt
+            ? GameScreen(
+                level: level,
+                operations: operations,
+                audioService: audioService,
+                scoreService: scoreService,
+              )
+            : MatchGameScreen(
+                level: level,
+                operations: operations,
+                audioService: audioService,
+                scoreService: scoreService,
+              ),
       ),
     );
   }

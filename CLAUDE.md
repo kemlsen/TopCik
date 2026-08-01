@@ -150,10 +150,10 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 
 ## 10. Ekranlar (Screens)
 
-1. **Ana Menü:** Oyna (en son oynanan mod + seviyeyle hızlı başlat), Mod Seç, Skor Tablosu, Ayarlar.
+1. **Ana Menü:** Oyna, Mod Seç, Skor Tablosu, Ayarlar. Oyun **yalnızca** "Oyna" butonuna basıldığında başlar; Mod Seç akışının kendisi oyunu başlatmaz (bkz. madde 2-4).
 2. **Mod Seçim Ekranı (uygulandı):** "Seviye Seç" (Sayı Avı) ve "Eşleştirme Modu" butonlarının birleştiği tek giriş noktası — oyuncu önce Sayı Avı / Eşleştirme kartlarından birine dokunur, ardından ortak Seviye Seçim Ekranı'na yönlenir. Daha önce bu iki mod ana menüde ayrı butonlardan (ve "Oyna" her zaman doğrudan Sayı Avı'na atlayarak) seçiliyordu; bu tutarsızlık giderildi. Uygulama: `lib/screens/mode_select_screen.dart` (`ModeSelectScreen`).
-3. **Seviye Seçim Ekranı:** Kolay / Orta / Zor / Uzman kartları. Hem Sayı Avı hem Eşleştirme modu bu ekranı `GameMode` parametresiyle paylaşır. Bir seviye seçildiğinde hem seviye hem mod "son oynanan" olarak kaydedilir (`ScoreService.setLastLevel` / `setLastMode`) — Ana Menü'deki "Oyna" butonu bu kaydı kullanır.
-4. **İşlem Türü Seç Ekranı:** Toplama/Çıkarma/Çarpma/Bölme seçimi; iki mod tarafından da paylaşılır.
+3. **Seviye Seçim Ekranı:** Kolay / Orta / Zor / Uzman kartları. Hem Sayı Avı hem Eşleştirme modu bu ekranı `GameMode` parametresiyle paylaşır. Bir seviye seçildiğinde mod da "son oynanan" olarak kaydedilir (`ScoreService.setLastLevel` / `setLastMode`).
+4. **İşlem Türü Seç Ekranı:** Toplama/Çıkarma/Çarpma/Bölme seçimi; iki mod tarafından da paylaşılır. **"Kaydet"e basmak oyunu başlatmaz** — seçilen işlem türlerini kaydeder (`ScoreService.setLastOperations`) ve doğrudan Ana Menü'ye döner ("Hazır! Başlamak için 'Oyna'ya dokun" bildirimiyle). Mod Seç akışının (mod → seviye → işlem türü) tek görevi, "Oyna" butonunun kullanacağı kombinasyonu hazırlamaktır; asıl oyun her zaman Ana Menü'deki "Oyna" butonuyla başlar — bu, en son kaydedilen mod + seviye + işlem türü kombinasyonunu okuyup (`MainMenuScreen._quickPlay`) hiçbir ara ekran göstermeden ilgili oyun ekranına gider.
 5. **Oyun Ekranı (Sayı Avı):** 4x4 grid + üstte hedef sayı + süre sayacı + skor.
 6. **Oyun Ekranı (Eşleştirme):** 4x4 grid + üstte kalan çift sayısı + süre sayacı + skor (bkz. Bölüm 3a).
 7. **Sonuç Ekranı:** Toplam skor, doğru/yanlış (veya eşleşen çift/yanlış deneme) sayısı, en iyi skor, "Tekrar Oyna" / "Ana Menü" butonları. Her modun kendi sonuç ekranı vardır.
@@ -211,6 +211,7 @@ lib/
   services/
     audio_service.dart
     score_service.dart      // yerel skor kaydı (shared_preferences), moda göre ayrı anahtar
+    app_messenger.dart      // ekranlar arası SnackBar için paylaşılan ScaffoldMessengerKey
 assets/
   sounds/
   images/
