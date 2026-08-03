@@ -46,38 +46,43 @@ class _TimerWidgetState extends State<TimerWidget>
         : (widget.remainingSeconds / widget.totalSeconds).clamp(0.0, 1.0);
     final badgeColor = isUrgent ? AppColors.error : AppColors.cta;
 
-    final content = Container(
-      width: 74,
-      height: 74,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: badgeColor,
-        boxShadow: [
-          BoxShadow(
-            color: badgeColor.withValues(alpha: 0.6),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+    // Dolgulu yeşil/kırmızı rozet kaldırıldı: azalan daire artık tek başına
+    // aciliyet rengini taşıyor (yeşil → kırmızı), rakamlar halkanın boş,
+    // şeffaf merkezinde duruyor.
+    final content = SizedBox(
+      width: 80,
+      height: 80,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(6),
+          // CircularProgressIndicator boyutu verilmezse Flutter'ın 36px'lik
+          // varsayılanına küçülüyor — SizedBox ile halkanın tüm alanı
+          // kaplamasını sağlıyoruz.
+          SizedBox(
+            width: 80,
+            height: 80,
             child: CircularProgressIndicator(
               value: progress,
               strokeWidth: 6,
               backgroundColor: Colors.white24,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              valueColor: AlwaysStoppedAnimation<Color>(badgeColor),
             ),
           ),
-          Text(
-            '${widget.remainingSeconds}',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
+          // Sabit boyutlu kutu: metin hiçbir zaman halka çizgisine kadar
+          // büyümüyor, "1:30" gibi uzun süreler de rahatça sığıyor.
+          SizedBox(
+            width: 48,
+            height: 30,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '${widget.remainingSeconds}',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ],
