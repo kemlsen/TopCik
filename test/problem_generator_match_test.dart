@@ -7,7 +7,7 @@ import 'package:mathgrid/models/difficulty_level.dart';
 
 void main() {
   group('ProblemGenerator.generateMatchGrid', () {
-    test('produces 16 unique expressions forming 8 answer-matched pairs',
+    test('produces 24 unique expressions forming 12 answer-matched pairs',
         () {
       final generator = ProblemGenerator(random: Random(42));
       final problems = generator.generateMatchGrid(
@@ -19,10 +19,10 @@ void main() {
         },
       );
 
-      expect(problems.length, 16);
+      expect(problems.length, 24);
 
       final expressions = problems.map((p) => p.expression).toSet();
-      expect(expressions.length, 16, reason: 'no duplicate expressions');
+      expect(expressions.length, 24, reason: 'no duplicate expressions');
 
       final answerCounts = <int, int>{};
       for (final p in problems) {
@@ -37,15 +37,18 @@ void main() {
 
     test('handles a narrow single-operation pool without hanging (division, easy)',
         () {
+      // Division-only at "Kolay" only has ~20 distinct single-step
+      // expressions (divisor 2-5 x quotient 1-5), fewer than the 24-cell
+      // grid needs — the generator's documented safety net fills the rest
+      // with repeats rather than hanging, so full uniqueness isn't
+      // guaranteed here (bkz. generateMatchGrid doc comment).
       final generator = ProblemGenerator(random: Random(7));
       final problems = generator.generateMatchGrid(
         DifficultyLevel.easy,
         operations: {Operation.division},
       );
 
-      expect(problems.length, 16);
-      final expressions = problems.map((p) => p.expression).toSet();
-      expect(expressions.length, 16);
+      expect(problems.length, 24);
       for (final p in problems) {
         expect(p.answer, greaterThanOrEqualTo(0));
       }
@@ -58,8 +61,7 @@ void main() {
         operations: {Operation.multiplication},
       );
 
-      expect(problems.length, 16);
-      expect(problems.map((p) => p.expression).toSet().length, 16);
+      expect(problems.length, 24);
     });
 
     test('works across all difficulty levels with all operations', () {
@@ -69,10 +71,10 @@ void main() {
           level,
           operations: Operation.values.toSet(),
         );
-        expect(problems.length, 16, reason: 'failed for $level');
+        expect(problems.length, 24, reason: 'failed for $level');
         expect(
           problems.map((p) => p.expression).toSet().length,
-          16,
+          24,
           reason: 'duplicate expression for $level',
         );
       }

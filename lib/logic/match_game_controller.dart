@@ -35,7 +35,7 @@ class MatchGameResult {
   });
 }
 
-/// Owns all live game state for Eşleştirme modu: a 4x4 grid where every
+/// Owns all live game state for Eşleştirme modu: a grid where every
 /// cell's math problem shares its answer with exactly one other cell.
 /// Players tap two cells; a matching pair fades away, a mismatch flashes
 /// red and resets. Uses the same can (lives) and süre (timer) mechanics as

@@ -11,21 +11,21 @@ Bu dosya, Claude Code (veya başka bir AI kodlama asistanı) ile bu projeyi geli
 **Hedef Kitle:** Çocuklar (7-12 yaş), matematiksel zeka ve işlem hızı gelişimi
 
 **Temel Fikir:**
-Oyunun iki modu vardır — ikisi de aynı 4x4 grid, can ve süre mekaniğini paylaşır, sadece hücrelerle etkileşim kuralı değişir:
+Oyunun iki modu vardır — ikisi de aynı 4x6 grid (4 sütun, 6 satır), can ve süre mekaniğini paylaşır, sadece hücrelerle etkileşim kuralı değişir:
 
-- **Sayı Avı modu:** Ekranda 4x4 boyutunda bir grid (16 hücre) bulunur. Her hücrede bir matematiksel işlem (örn: `7 + 5`, `12 - 4`, `3 x 6`) gösterilir. Oyuncuya ekranın üstünde (veya ayrı bir alanda) bir **hedef sayı** (cevap) gösterilir. Oyuncu, gridde bu hedef sayıya eşit sonucu veren hücreyi bulup dokunur.
+- **Sayı Avı modu:** Ekranda 4x6 boyutunda bir grid (24 hücre) bulunur. Her hücrede bir matematiksel işlem (örn: `7 + 5`, `12 - 4`, `3 x 6`) gösterilir. Oyuncuya ekranın üstünde (veya ayrı bir alanda) bir **hedef sayı** (cevap) gösterilir. Oyuncu, gridde bu hedef sayıya eşit sonucu veren hücreyi bulup dokunur.
   - **Doğru cevap** → o hücre yok olur (fade-out / patlama animasyonu), yeni bir işlem ve hedef sayı gelir.
   - **Yanlış cevap** → o hücre kırmızıya döner, ekranda "Yanlış!" yazısı belirir, kısa bir titreşim/ses efekti olur, hücre eski haline döner (işlemi kalır, tekrar denenebilir).
   - **Süre** sınırlıdır. Süre dolmadan mümkün olduğunca çok doğru cevap verilmeye çalışılır.
-- **Eşleştirme modu:** (bkz. Bölüm 3a) Aynı 4x4 grid, ama hedef sayı yok. Grid, sonucu birbirine eşit olan iki farklı işlemden oluşan 8 çift içerir (örn. `3 + 4` ve `10 - 3`, ikisi de `7`). Oyuncu sırayla iki hücreye dokunarak sonucu aynı olan çifti bulmaya çalışır.
+- **Eşleştirme modu:** (bkz. Bölüm 3a) Aynı 4x6 grid, ama hedef sayı yok. Grid, sonucu birbirine eşit olan iki farklı işlemden oluşan 12 çift içerir (örn. `3 + 4` ve `10 - 3`, ikisi de `7`). Oyuncu sırayla iki hücreye dokunarak sonucu aynı olan çifti bulmaya çalışır.
 
 ---
 
 ## 2. Temel Oyun Döngüsü (Game Loop)
 
-1. Oyun başlar → 4x4 grid, 16 farklı matematik işlemiyle doldurulur.
+1. Oyun başlar → 4x6 grid, 24 farklı matematik işlemiyle doldurulur.
 2. Üstte/altta bir **hedef sayı** gösterilir (bu sayı, gridteki işlemlerden birinin doğru cevabıdır).
-3. Süre sayacı başlar (örn. 60-90 saniye, seviyeye göre ayarlanabilir).
+3. Süre sayacı başlar (örn. 90-135 saniye, seviyeye göre ayarlanabilir; büyütülmüş 24 hücrelik grid için 4x4/16 hücrelik özgün süre değerlerinin 1.5 katı).
 4. Oyuncu doğru hücreye dokunur:
    - Hücre yok olma animasyonu oynatılır.
    - Skor artar.
@@ -45,15 +45,15 @@ Oyunun iki modu vardır — ikisi de aynı 4x4 grid, can ve süre mekaniğini pa
 İki seçenek var, birini seçip uygulayın:
 
 ### Seçenek A — "Sabit Grid, Yenilenen Hücre" (Önerilen, daha basit)
-- Grid hep 4x4 (16 hücre) dolu kalır.
+- Grid hep 4x6 (24 hücre) dolu kalır.
 - Doğru cevap verilince o hücre boşalır, hemen ardından **yeni bir işlem** o hücreye yazılır.
-- Yeni hedef sayı belirlenir (mutlaka gridteki 16 işlemden en az birinin cevabı olacak şekilde).
+- Yeni hedef sayı belirlenir (mutlaka gridteki 24 işlemden en az birinin cevabı olacak şekilde).
 - Oyun süre bitene kadar sürer, skor = doğru cevap sayısı.
 
 ### Seçenek B — "Azalan Grid" (Daha zorlayıcı, seviye tamamlama hissi verir)
-- Grid 16 işlemle başlar.
+- Grid 24 işlemle başlar.
 - Doğru cevap verildikçe hücreler gerçekten boşalıp yok olur (o pozisyon boş kalır).
-- Tüm grid boşaldığında (16 doğru cevap) seviye biter → bir sonraki seviyeye geçilir (daha zor işlemler, belki 5x5 gibi büyüyen grid).
+- Tüm grid boşaldığında (24 doğru cevap) seviye biter → bir sonraki seviyeye geçilir (daha zor işlemler, belki 5x6 gibi büyüyen grid).
 - Süre, seviyeyi bitirmek için verilen süredir. Süre dolarsa oyun biter.
 
 **Öneri:** MVP için Seçenek B kullanılsın çünkü "bitirebilme" hissi ve seviye ilerlemesi çocuklar için daha motive edici. Seçenek A, sonsuz mod (endless mode) için kullanılabilir.
@@ -64,7 +64,7 @@ Oyunun iki modu vardır — ikisi de aynı 4x4 grid, can ve süre mekaniğini pa
 
 Sayı Avı moduna ek olarak, aynı seviye/işlem türü seçim akışını paylaşan ikinci bir oyun modu: **Eşleştirme**.
 
-**Fikir:** 4x4 grid, 16 hücre = **8 çift**. Her çiftteki iki hücrenin işlemi farklıdır ama sonucu aynıdır (örn. `3 + 4` ve `10 - 3`, ikisi de `7`). Hedef sayı kutusu yoktur; onun yerine ekranda **kalan çift sayısı** gösterilir (örn. "Kalan çift: 5").
+**Fikir:** 4x6 grid, 24 hücre = **12 çift**. Her çiftteki iki hücrenin işlemi farklıdır ama sonucu aynıdır (örn. `3 + 4` ve `10 - 3`, ikisi de `7`). Hedef sayı kutusu yoktur; onun yerine ekranda **kalan çift sayısı** gösterilir (örn. "Kalan çift: 5").
 
 **Oynanış:**
 1. Oyuncu bir hücreye dokunur → hücre vurgulanır (mavi glow + kalın kenarlık), "seçili" durumuna geçer.
@@ -72,10 +72,10 @@ Sayı Avı moduna ek olarak, aynı seviye/işlem türü seçim akışını payla
 3. Oyuncu ikinci bir hücreye dokunur:
    - **Sonuçlar eşitse** → iki hücre de yeşil parlama + küçülüp yok olma animasyonuyla kaybolur, skor artar, kalan çift sayısı azalır.
    - **Sonuçlar farklıysa** → iki hücre de kırmızıya döner, kısa süre "sallanır", "Eşleşmedi!" yazısı belirir, can bir azalır, sonra ikisi de normale döner (işlemler yerinde kalır).
-4. Tüm 8 çift eşleştirilince seviye tamamlanır (Seçenek B ile aynı mantık). Süre dolarsa veya can biterse oyun biter.
+4. Tüm 12 çift eşleştirilince seviye tamamlanır (Seçenek B ile aynı mantık). Süre dolarsa veya can biterse oyun biter.
 
 **Kurallar:**
-- Gridteki 16 ifade birbirinden farklı olmalı (görsel çeşitlilik — Bölüm 5 ile aynı kural), ama **cevaplar** paylaşılabilir: hatta bazen 2'den fazla hücre aynı cevaba sahip olabilir (örn. iki farklı çiftin ikisi de `12` cevabını verirse), bu durumda oyuncu bu hücrelerden **herhangi ikisini** eşleştirebilir — bu, Bölüm 4'teki "birden fazla hücre aynı sonuçsa ikisi de geçerlidir" prensibinin eşleştirme moduna uyarlanmış hâlidir.
+- Gridteki 24 ifade birbirinden farklı olmalı (görsel çeşitlilik — Bölüm 5 ile aynı kural), ama **cevaplar** paylaşılabilir: hatta bazen 2'den fazla hücre aynı cevaba sahip olabilir (örn. iki farklı çiftin ikisi de `12` cevabını verirse), bu durumda oyuncu bu hücrelerden **herhangi ikisini** eşleştirebilir — bu, Bölüm 4'teki "birden fazla hücre aynı sonuçsa ikisi de geçerlidir" prensibinin eşleştirme moduna uyarlanmış hâlidir.
 - Uzman seviyesinin iki adımlı ifadeleri (`(3+2)x4` gibi) eşleştirme modunda **üretilmez** — rastgele bir sonuca uyan ikinci bir iki-adımlı ifade türetmek gereksiz karmaşıklık katar; bu seviyede de tek adımlı işlemler kullanılır.
 - Can, süre, skor (kombo + hız bonusu) ve seviye/işlem türü seçimi Sayı Avı moduyla birebir aynı mekanikleri kullanır (bkz. Bölüm 6, 7).
 - En iyi skorlar moda göre ayrı tutulur (Sayı Avı ve Eşleştirme'nin skor tabloları birbirinden bağımsızdır).
@@ -154,8 +154,8 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 2. **Mod Seçim Ekranı (uygulandı):** "Seviye Seç" (Sayı Avı) ve "Eşleştirme Modu" butonlarının birleştiği tek giriş noktası — oyuncu önce Sayı Avı / Eşleştirme kartlarından birine dokunur, ardından ortak Seviye Seçim Ekranı'na yönlenir. Daha önce bu iki mod ana menüde ayrı butonlardan (ve "Oyna" her zaman doğrudan Sayı Avı'na atlayarak) seçiliyordu; bu tutarsızlık giderildi. Uygulama: `lib/screens/mode_select_screen.dart` (`ModeSelectScreen`).
 3. **Seviye Seçim Ekranı:** Kolay / Orta / Zor / Uzman kartları. Hem Sayı Avı hem Eşleştirme modu bu ekranı `GameMode` parametresiyle paylaşır. Bir seviye seçildiğinde mod da "son oynanan" olarak kaydedilir (`ScoreService.setLastLevel` / `setLastMode`).
 4. **İşlem Türü Seç Ekranı:** Toplama/Çıkarma/Çarpma/Bölme seçimi; iki mod tarafından da paylaşılır. **"Kaydet"e basmak oyunu başlatmaz** — seçilen işlem türlerini kaydeder (`ScoreService.setLastOperations`) ve doğrudan Ana Menü'ye döner ("Hazır! Başlamak için 'Oyna'ya dokun" bildirimiyle). Mod Seç akışının (mod → seviye → işlem türü) tek görevi, "Oyna" butonunun kullanacağı kombinasyonu hazırlamaktır; asıl oyun her zaman Ana Menü'deki "Oyna" butonuyla başlar — bu, en son kaydedilen mod + seviye + işlem türü kombinasyonunu okuyup (`MainMenuScreen._quickPlay`) hiçbir ara ekran göstermeden ilgili oyun ekranına gider.
-5. **Oyun Ekranı (Sayı Avı):** 4x4 grid + üstte hedef sayı + süre sayacı + skor.
-6. **Oyun Ekranı (Eşleştirme):** 4x4 grid + üstte kalan çift sayısı + süre sayacı + skor (bkz. Bölüm 3a).
+5. **Oyun Ekranı (Sayı Avı):** 4x6 grid + üstte hedef sayı + süre sayacı + skor.
+6. **Oyun Ekranı (Eşleştirme):** 4x6 grid + üstte kalan çift sayısı + süre sayacı + skor (bkz. Bölüm 3a).
 7. **Sonuç Ekranı:** Toplam skor, doğru/yanlış (veya eşleşen çift/yanlış deneme) sayısı, en iyi skor, "Tekrar Oyna" / "Ana Menü" butonları. Her modun kendi sonuç ekranı vardır.
 8. **Skor Tablosu:** Her iki modun (Sayı Avı, Eşleştirme) seviye başına en iyi skorlarını ayrı ayrı gösterir.
 9. **Ayarlar:** Ses aç/kapa, zorluk varsayılanı, dil seçimi (opsiyonel çoklu dil desteği).
@@ -239,7 +239,7 @@ class GridCell {
 
 ## 14. Kabul Kriterleri (Acceptance Criteria) — MVP
 
-- [ ] 4x4 grid ekranda düzgün render ediliyor, tüm hücreler dokunulabilir.
+- [ ] 4x6 grid ekranda düzgün render ediliyor, tüm hücreler dokunulabilir.
 - [ ] Her hücrede geçerli, çözülebilir bir matematik işlemi var.
 - [ ] Hedef sayı her zaman gridteki en az bir hücrenin cevabına eşit.
 - [ ] Doğru dokunuşta hücre animasyonla yok oluyor, skor artıyor, yeni hedef sayı geliyor.
@@ -250,7 +250,7 @@ class GridCell {
 - [ ] Sonuç ekranında skor ve tekrar oyna seçeneği var.
 - [ ] En az 3 zorluk seviyesi mevcut.
 - [ ] Ses efektleri çalışıyor ve kapatılabiliyor.
-- [x] Eşleştirme modu: 4x4 grid, sonucu eşit iki hücre eşleştirilince ikisi de yok oluyor; yanlış eşleştirmede ikisi de kırmızıya dönüp normale dönüyor.
+- [x] Eşleştirme modu: 4x6 grid, sonucu eşit iki hücre eşleştirilince ikisi de yok oluyor; yanlış eşleştirmede ikisi de kırmızıya dönüp normale dönüyor.
 - [x] Eşleştirme modunda da seviye ve işlem türü seçilebiliyor, can/süre mekaniği Sayı Avı ile aynı.
 
 ---
@@ -271,6 +271,6 @@ class GridCell {
 - Çocuk hedef kitlesi olduğu için **stres yaratmayan** bir ton korunmalı: yanlış cevap cezalandırıcı değil, öğretici olmalı (belki doğru cevabı gösteren bir ipucu sistemi eklenebilir).
 - Metinler basit, büyük punto, yüksek kontrast — okuma güçlüğü olan çocuklar için de erişilebilir olmalı.
 - Reklam/IAP eklenecekse ebeveyn onay ekranı (yaş doğrulama / matematik sorusu gibi basit bir kapı) kullanılmalı — bu tür oyunlarda COPPA/KVKK gibi çocuk gizliliği kurallarına dikkat edilmeli.
-- Performans: 4x4 grid çok ağır değil, ama animasyonlar düşük FPS'li cihazlarda bile akıcı çalışmalı.
+- Performans: 4x6 grid çok ağır değil, ama animasyonlar düşük FPS'li cihazlarda bile akıcı çalışmalı.
 
 ---

@@ -12,7 +12,7 @@ import '../widgets/match_status_widget.dart';
 import '../widgets/timer_widget.dart';
 import 'match_result_screen.dart';
 
-/// Eşleştirme modu oyun ekranı: 4x4 grid + üstte kalan çift sayısı + süre
+/// Eşleştirme modu oyun ekranı: 4x6 grid + üstte kalan çift sayısı + süre
 /// sayacı + skor. Hedef sayı yerine, oyuncu sonucu aynı olan iki hücreyi
 /// eşleştirir (bkz. CLAUDE.md Bölüm 3a).
 class MatchGameScreen extends StatefulWidget {

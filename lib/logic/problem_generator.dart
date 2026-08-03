@@ -18,7 +18,7 @@ class ProblemGenerator {
   List<MathProblem> generateGrid(
     DifficultyLevel level, {
     required Set<Operation> operations,
-    int count = 16,
+    int count = 24,
   }) {
     final problems = <MathProblem>[];
     final seenExpressions = <String>{};
@@ -57,8 +57,8 @@ class ProblemGenerator {
     return _generateOne(level, operationList);
   }
 
-  /// Generates a grid for Eşleştirme modu: [pairCount] pairs (16 cells for
-  /// the default 4x4 grid) where each pair is two *different* expressions
+  /// Generates a grid for Eşleştirme modu: [pairCount] pairs (24 cells for
+  /// the default grid) where each pair is two *different* expressions
   /// sharing the same answer, so players match them by tapping both. Unlike
   /// [generateGrid], repeated answers across different pairs are fine (and
   /// even welcome — bkz. Bölüm 4 edge case): only the expression *text*
@@ -71,7 +71,7 @@ class ProblemGenerator {
   List<MathProblem> generateMatchGrid(
     DifficultyLevel level, {
     required Set<Operation> operations,
-    int pairCount = 8,
+    int pairCount = 12,
   }) {
     final problems = <MathProblem>[];
     final usedExpressions = <String>{};
@@ -82,31 +82,34 @@ class ProblemGenerator {
 
     while (problems.length < targetCount && attempts < maxAttempts) {
       attempts++;
-      final seedOp = operationList[_random.nextInt(operationList.length)];
-      final seed = _generateSingleStep(seedOp, level);
-      if (usedExpressions.contains(seed.expression)) continue;
-
-      MathProblem? partner;
-      for (var i = 0; i < 40 && partner == null; i++) {
-        final partnerOp = operationList[_random.nextInt(operationList.length)];
-        final candidate = _forAnswer(partnerOp, seed.answer, level);
-        if (candidate == null) continue;
-        if (candidate.expression == seed.expression) continue;
-        if (usedExpressions.contains(candidate.expression)) continue;
-        partner = candidate;
-      }
-      if (partner == null) continue;
-
-      usedExpressions.add(seed.expression);
-      usedExpressions.add(partner.expression);
-      problems.add(seed);
-      problems.add(partner);
+      final pair = _findUniquePair(operationList, level, usedExpressions);
+      if (pair == null) continue;
+      usedExpressions.add(pair.$1.expression);
+      usedExpressions.add(pair.$2.expression);
+      problems.add(pair.$1);
+      problems.add(pair.$2);
     }
 
     // Safety net: guarantee a full grid even in pathological cases (e.g. a
     // single operation type with a tiny answer range) so the game never
-    // launches with an unpaired cell.
+    // launches with an unpaired cell. Still tries hard for a unique pair
+    // first — duplicates are only accepted once the expression domain for
+    // this level/operation combo is truly exhausted.
     while (problems.length < targetCount) {
+      final pair = _findUniquePair(
+        operationList,
+        level,
+        usedExpressions,
+        attempts: 150,
+      );
+      if (pair != null) {
+        usedExpressions.add(pair.$1.expression);
+        usedExpressions.add(pair.$2.expression);
+        problems.add(pair.$1);
+        problems.add(pair.$2);
+        continue;
+      }
+
       final seedOp = operationList[_random.nextInt(operationList.length)];
       final seed = _generateSingleStep(seedOp, level);
       final partner = _forAnswer(seedOp, seed.answer, level) ?? seed;
@@ -116,6 +119,33 @@ class ProblemGenerator {
 
     problems.shuffle(_random);
     return problems;
+  }
+
+  /// Tries to find two different single-step expressions sharing an answer,
+  /// neither of which is already in [usedExpressions]. Returns null if no
+  /// such pair turns up within [attempts] tries (e.g. the answer domain for
+  /// this level/operation combo is nearly or fully exhausted).
+  (MathProblem, MathProblem)? _findUniquePair(
+    List<Operation> operationList,
+    DifficultyLevel level,
+    Set<String> usedExpressions, {
+    int attempts = 1,
+  }) {
+    for (var i = 0; i < attempts; i++) {
+      final seedOp = operationList[_random.nextInt(operationList.length)];
+      final seed = _generateSingleStep(seedOp, level);
+      if (usedExpressions.contains(seed.expression)) continue;
+
+      for (var j = 0; j < 40; j++) {
+        final partnerOp = operationList[_random.nextInt(operationList.length)];
+        final candidate = _forAnswer(partnerOp, seed.answer, level);
+        if (candidate == null) continue;
+        if (candidate.expression == seed.expression) continue;
+        if (usedExpressions.contains(candidate.expression)) continue;
+        return (seed, candidate);
+      }
+    }
+    return null;
   }
 
   /// Builds a single-step expression for [operation] that evaluates to

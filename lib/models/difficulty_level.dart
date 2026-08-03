@@ -120,17 +120,19 @@ extension DifficultyLevelInfo on DifficultyLevel {
   /// Whether two-step expressions like "(3 + 2) x 4" should be generated.
   bool get useTwoStepExpressions => this == DifficultyLevel.expert;
 
-  /// Time given to clear the 4x4 grid, in seconds (Bölüm 7).
+  /// Time given to clear the grid, in seconds (Bölüm 7). Scaled up from the
+  /// original 4x4/16-cell baseline (90/80/70/60) by the same ratio the grid
+  /// grew to 24 cells, so the seconds-per-cell pace stays the same as before.
   int get timeLimitSeconds {
     switch (this) {
       case DifficultyLevel.easy:
-        return 90;
+        return 135;
       case DifficultyLevel.medium:
-        return 80;
+        return 120;
       case DifficultyLevel.hard:
-        return 70;
+        return 105;
       case DifficultyLevel.expert:
-        return 60;
+        return 90;
     }
   }
 }

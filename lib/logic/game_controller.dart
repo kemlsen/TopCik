@@ -34,11 +34,11 @@ class GameResult {
   });
 }
 
-/// Owns all live game state for the grid screen: the 4x4 problem grid,
+/// Owns all live game state for the grid screen: the problem grid,
 /// the current target number, score, combo streak and the countdown timer.
 ///
 /// Uses "Seçenek B — Azalan Grid" (Bölüm 3): cells empty out as they are
-/// solved and the level ends once all 16 are cleared.
+/// solved and the level ends once all [gridSize] cells are cleared.
 class GameController extends GridPlayable {
   GameController({
     required this.level,
