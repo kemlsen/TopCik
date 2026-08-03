@@ -105,9 +105,15 @@ class _GridCellWidgetState extends State<GridCellWidget>
               decoration: BoxDecoration(
                 color: backgroundColor,
                 borderRadius: BorderRadius.circular(18),
+                // İnce, yarı şeffaf beyaz kenarlık: hücrenin rengi mor
+                // gradient arka planla yakın tonda olsa bile hücreyi
+                // arka plandan ayırt edilir kılar (bkz. AppColors.tilePalette).
                 border: isSelected
                     ? Border.all(color: Colors.white, width: 4)
-                    : null,
+                    : Border.all(
+                        color: Colors.white.withValues(alpha: 0.32),
+                        width: 1.5,
+                      ),
                 boxShadow: isCorrect
                     ? [
                         BoxShadow(

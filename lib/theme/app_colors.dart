@@ -23,13 +23,15 @@ abstract class AppColors {
   static const levelHard = Color(0xFFFF8A4C); // Turuncu
   static const levelExpert = Color(0xFF9B6BF2); // Mor
 
-  // Grid hücre (idle) renk havuzu
+  // Grid hücre (idle) renk havuzu. Oyun ekranının mor gradient arka planıyla
+  // (bkz. `gradient` altında primary/accent) karışmaması için buradaki hiçbir
+  // renk indigo/mor tonunda değil — hepsi arka plana göre yüksek kontrastlı.
   static const tilePalette = [
     Color(0xFF3B9CF2), // mavi
     Color(0xFFFFB020), // altın
     Color(0xFFFF8A4C), // turuncu
     Color(0xFF22C3A6), // camgöbeği
-    Color(0xFF9B6BF2), // mor
+    Color(0xFFFF6FA6), // pembe
   ];
 
   // Yüzeyler
