@@ -50,8 +50,8 @@ class _TimerWidgetState extends State<TimerWidget>
     // aciliyet rengini taşıyor (yeşil → kırmızı), rakamlar halkanın boş,
     // şeffaf merkezinde duruyor.
     final content = SizedBox(
-      width: 80,
-      height: 80,
+      width: 68,
+      height: 68,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -59,11 +59,11 @@ class _TimerWidgetState extends State<TimerWidget>
           // varsayılanına küçülüyor — SizedBox ile halkanın tüm alanı
           // kaplamasını sağlıyoruz.
           SizedBox(
-            width: 80,
-            height: 80,
+            width: 68,
+            height: 68,
             child: CircularProgressIndicator(
               value: progress,
-              strokeWidth: 6,
+              strokeWidth: 5,
               backgroundColor: Colors.white24,
               valueColor: AlwaysStoppedAnimation<Color>(badgeColor),
             ),
@@ -71,8 +71,8 @@ class _TimerWidgetState extends State<TimerWidget>
           // Sabit boyutlu kutu: metin hiçbir zaman halka çizgisine kadar
           // büyümüyor, "1:30" gibi uzun süreler de rahatça sığıyor.
           SizedBox(
-            width: 48,
-            height: 30,
+            width: 40,
+            height: 26,
             child: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
