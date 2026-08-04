@@ -69,12 +69,15 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GradientScaffold(
-      title: widget.level.displayName,
-      body: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          return Column(
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return GradientScaffold(
+          title: widget.level.displayName,
+          dimmed:
+              _controller.timeRemainingSeconds <= 10 &&
+              _controller.timeRemainingSeconds > 0,
+          body: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -128,9 +131,9 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

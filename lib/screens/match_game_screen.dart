@@ -72,12 +72,15 @@ class _MatchGameScreenState extends State<MatchGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GradientScaffold(
-      title: '${widget.level.displayName} · Eşleştirme',
-      body: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          return Column(
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return GradientScaffold(
+          title: '${widget.level.displayName} · Eşleştirme',
+          dimmed:
+              _controller.timeRemainingSeconds <= 10 &&
+              _controller.timeRemainingSeconds > 0,
+          body: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -132,9 +135,9 @@ class _MatchGameScreenState extends State<MatchGameScreen> {
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
