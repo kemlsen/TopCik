@@ -34,7 +34,7 @@ class ClimbGameResult {
 /// Owns all live game state for Tırmanış modu (bkz. CLAUDE.md Bölüm 3b): a
 /// single continuous run split into short "bölüm"s whose grid grows
 /// (1x2 -> 2x2 -> 3x3 -> 4x4, sabitlenir) and whose arithmetic difficulty
-/// scales in lockstep (bkz. [climbColumnsForRound]/[climbLevelForRound]).
+/// scales in lockstep (bkz. [climbGridShapeForRound]/[climbLevelForRound]).
 /// Finding the target cell instantly advances to the next round with a
 /// freshly generated grid; there is a single depleting run timer (not
 /// per-round) that gets a small bonus on every correct answer, so the
@@ -113,7 +113,11 @@ class ClimbGameController extends GridPlayable {
     level = climbLevelForRound(round);
     final shape = climbGridShapeForRound(round);
     cells = _generator
-        .generateGrid(level, operations: level.operations.toSet(), count: shape.cellCount)
+        .generateGrid(
+          level,
+          operations: climbOperationsForRound(round),
+          count: shape.cellCount,
+        )
         .map((problem) => GridCell(problem: problem))
         .toList();
     targetNumber = cells[_random.nextInt(cells.length)].problem.answer;

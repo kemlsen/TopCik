@@ -93,22 +93,26 @@ Sayı Avı ve Eşleştirme'ye ek olarak üçüncü bir mod: **Tırmanış**. Di�
 
 **Oynanış — grid boyutu ve zorluk eşlemesi (bölüm numarasına göre):**
 
-| Bölüm aralığı | Grid boyutu | Zorluk (mevcut `DifficultyLevel`) |
-|---|---|---|
-| 1-10 | 1x2 (tek hücrede gerçek bir seçim olmaz, en az iki hücre) | Kolay |
-| 11-20 | 2x2 | Orta |
-| 21-40 | 3x3 | Zor |
-| 41+ | 4x4 (orada sabit kalır, sonsuza kadar büyümez) | Uzman |
+| Bölüm aralığı | Grid boyutu | Sayı aralığı (mevcut `DifficultyLevel`) | İşlem türleri |
+|---|---|---|---|
+| 1-20 | 1x2 (tek hücrede gerçek bir seçim olmaz, en az iki hücre) | Kolay | Sadece toplama/çıkarma |
+| 21-50 | 2x2 | Orta | Sadece toplama/çıkarma |
+| 51-100 | 3x3 | Zor | Toplama/çıkarma/çarpma/bölme |
+| 101+ | 4x4 (orada sabit kalır, sonsuza kadar büyümez) | Uzman | Toplama/çıkarma/çarpma/bölme |
 
-**Süre mekaniği:** Diğer iki modun aksine bölüm başına ayrı bir süre yoktur — koşunun tamamı boyunca **tek bir eriyen sayaç** vardır (başlangıç: 45 saniye). Her doğru cevapta sayaca **+3 saniye** bonus eklenir; **yanlış cevapta süre cezası yoktur**, sadece can gider. İlk 10 bölüm (1x2 grid) neredeyse anında geçildiği için oyuncu bölüm 11'e girerken ~30 saniyelik bir "ısınma payı" biriktirmiş olur; grid büyüyüp işlemler zorlaştıkça bölüm başına gerçek çözüm süresi 3 saniyeyi aşmaya başlar ve bu tampon doğal olarak erir — ayrı bir zorluk eğrisi koduna gerek kalmadan "hızlı kalmalı" baskısını üretir.
+Eşikler bilerek geniş tutulur: ilkokulda matematiğe yeni başlayan bir çocuk ilk bölümlerde zorlanmadan uzun süre ilerleyip daha ileri bölümlere ulaşabilsin diye. Çarpma ve bölme, mevcut `DifficultyLevel.operations`'tan bağımsız bir climb'e özel havuzla (`climbOperationsForRound`) yalnızca Zor katmanından itibaren açılır — Kolay ve Orta katmanları her zaman sadece toplama/çıkarma içerir.
+
+**Süre mekaniği:** Diğer iki modun aksine bölüm başına ayrı bir süre yoktur — koşunun tamamı boyunca **tek bir eriyen sayaç** vardır (başlangıç: 45 saniye). Her doğru cevapta sayaca **+3 saniye** bonus eklenir; **yanlış cevapta süre cezası yoktur**, sadece can gider.
 
 **Kurallar:**
 - Yanlış cevapta hücre kırmızıya döner, can bir azalır, ama **bölüm/grid/hedef değişmez** — Sayı Avı'ndaki yanlış cevap davranışının birebir aynısı, sadece "bölüm ilerlemez" ek kuralıyla.
 - Bitiş koşulları sadece süre dolması veya canların tükenmesidir — Seçenek B'deki gibi bir "tam temizleme/seviye tamamlandı" kazanma durumu **yoktur** (Tırmanış sonsuz bir hayatta kalma modudur).
 - Can, kombo/hız skor bonusu Sayı Avı ile birebir aynı mekanikleri kullanır (bkz. Bölüm 6).
 - En iyi skorlar diğer modlardan bağımsız, ayrı iki rekorla tutulur: **en iyi ulaşılan bölüm** ve **en iyi skor** (diğer modlardaki gibi seviye başına ayrı bir tablo yoktur, çünkü Tırmanış'ta seçilebilir bir seviye kavramı yoktur).
+- Katman değişimlerinde (bölüm 21, 51, 101) ekranda herhangi bir uyarı/kutlama gösterilmez — grid/zorluk sessizce büyür, oyuncunun akışı bölünmez.
+- Az satırlı gridlerde (özellikle 1x2) hücrelerin aşırı uzayıp garip görünmesini önlemek için `GridWidget` hücre en-boy oranını makul bir aralığa sıkıştırır ve grid'i dikeyde ortalar (bkz. `lib/widgets/grid_widget.dart`).
 
-**Uygulama:** `lib/logic/climb_game_controller.dart` (`ClimbGameController`), bölüm→(grid boyutu, zorluk) eşlemesi `lib/logic/climb_progression.dart` (`climbColumnsForRound`/`climbLevelForRound`), grid üretimi mevcut `lib/logic/problem_generator.dart`'taki `generateGrid` (değişiklik gerekmedi, `count` zaten parametrik), ekranlar `lib/screens/climb_game_screen.dart` ve `lib/screens/climb_result_screen.dart`, bölüm rozeti `lib/widgets/climb_status_widget.dart`. Skor kaydı `lib/services/score_service.dart`'taki `getClimbBestRound`/`submitClimbBestRound`/`getClimbBestScore`/`submitClimbBestScore`. `ModeSelectScreen`'deki (bkz. Bölüm 10) "Tırmanış" kartından seçilir; kart, diğer modların aksine `LevelSelectScreen`'i atlayıp doğrudan `ClimbGameScreen`'e gider.
+**Uygulama:** `lib/logic/climb_game_controller.dart` (`ClimbGameController`), bölüm→(grid boyutu, zorluk, işlem havuzu) eşlemesi `lib/logic/climb_progression.dart` (`climbGridShapeForRound`/`climbLevelForRound`/`climbOperationsForRound`), grid üretimi mevcut `lib/logic/problem_generator.dart`'taki `generateGrid` (değişiklik gerekmedi, `count`/`operations` zaten parametrik), ekranlar `lib/screens/climb_game_screen.dart` ve `lib/screens/climb_result_screen.dart`, bölüm rozeti `lib/widgets/climb_status_widget.dart`. Skor kaydı `lib/services/score_service.dart`'taki `getClimbBestRound`/`submitClimbBestRound`/`getClimbBestScore`/`submitClimbBestScore`. `ModeSelectScreen`'deki (bkz. Bölüm 10) "Tırmanış" kartından seçilir; kart, diğer modların aksine `LevelSelectScreen`'i atlayıp doğrudan `ClimbGameScreen`'e gider.
 
 ---
 
