@@ -11,13 +11,14 @@ Bu dosya, Claude Code (veya başka bir AI kodlama asistanı) ile bu projeyi geli
 **Hedef Kitle:** Çocuklar (7-12 yaş), matematiksel zeka ve işlem hızı gelişimi
 
 **Temel Fikir:**
-Oyunun iki modu vardır — ikisi de aynı 4x6 grid (4 sütun, 6 satır), can ve süre mekaniğini paylaşır, sadece hücrelerle etkileşim kuralı değişir:
+Oyunun üç modu vardır — Sayı Avı ve Eşleştirme aynı 4x6 grid, can ve süre mekaniğini paylaşır, sadece hücrelerle etkileşim kuralı değişir; Tırmanış ise aynı can mekaniğini paylaşsa da kendi grid-büyüme ve tek-süre kurallarına sahiptir:
 
 - **Sayı Avı modu:** Ekranda 4x6 boyutunda bir grid (24 hücre) bulunur. Her hücrede bir matematiksel işlem (örn: `7 + 5`, `12 - 4`, `3 x 6`) gösterilir. Oyuncuya ekranın üstünde (veya ayrı bir alanda) bir **hedef sayı** (cevap) gösterilir. Oyuncu, gridde bu hedef sayıya eşit sonucu veren hücreyi bulup dokunur.
   - **Doğru cevap** → o hücre yok olur (fade-out / patlama animasyonu), yeni bir işlem ve hedef sayı gelir.
   - **Yanlış cevap** → o hücre kırmızıya döner, ekranda "Yanlış!" yazısı belirir, kısa bir titreşim/ses efekti olur, hücre eski haline döner (işlemi kalır, tekrar denenebilir).
   - **Süre** sınırlıdır. Süre dolmadan mümkün olduğunca çok doğru cevap verilmeye çalışılır.
 - **Eşleştirme modu:** (bkz. Bölüm 3a) Aynı 4x6 grid, ama hedef sayı yok. Grid, sonucu birbirine eşit olan iki farklı işlemden oluşan 12 çift içerir (örn. `3 + 4` ve `10 - 3`, ikisi de `7`). Oyuncu sırayla iki hücreye dokunarak sonucu aynı olan çifti bulmaya çalışır.
+- **Tırmanış modu:** (bkz. Bölüm 3b) Sayı Avı'nın "hedefi bul" etkileşimini kullanır, ama tek, sürekli akan bir koşuda grid boyutu ve zorluk bölüm bölüm büyür (1x2 → 2x2 → 3x3 → 4x4). Hedefi bulmak anında bir sonraki bölüme geçirir; tek bir eriyen süre sayacı, her doğru cevapta küçük bir bonusla beslenir.
 
 ---
 
@@ -81,6 +82,33 @@ Sayı Avı moduna ek olarak, aynı seviye/işlem türü seçim akışını payla
 - En iyi skorlar moda göre ayrı tutulur (Sayı Avı ve Eşleştirme'nin skor tabloları birbirinden bağımsızdır).
 
 **Uygulama:** `lib/logic/match_game_controller.dart` (`MatchGameController`), grid üretimi `lib/logic/problem_generator.dart` içindeki `generateMatchGrid`/`_forAnswer`, ekranlar `lib/screens/match_game_screen.dart` ve `lib/screens/match_result_screen.dart`. Ana menüdeki "Mod Seç" butonuyla açılan `ModeSelectScreen`'den (bkz. Bölüm 10) seçilir, aynı Seviye Seç / İşlem Türü Seç ekranlarını (`GameMode` parametresiyle) kullanır.
+
+---
+
+## 3b. Tırmanış Modu (Uygulandı)
+
+Sayı Avı ve Eşleştirme'ye ek olarak üçüncü bir mod: **Tırmanış**. Diğer ikisinden farkı, sabit bir seviye/işlem türü seçimi yerine tek, sürekli akan bir koşuda kolaydan zora doğru otomatik ilerlemesidir.
+
+**Fikir:** Tek bir koşu, art arda gelen kısa "bölüm"lere ayrılır. Her bölüm, Sayı Avı'nın "hedefi bul" etkileşiminin tek bir turu: bir grid ve bir hedef sayı gösterilir, doğru hücreye dokunmak **anında bir sonraki bölüme** geçirir (Sayı Avı'nın aksine, tek hücre boşaltıp aynı gridde devam etmez — her bölümde grid tamamen yenilenir). Mod Seç ekranından doğrudan oyuna girilir; Seviye Seç / İşlem Türü Seç ekranları **atlanır**, çünkü hem grid boyutu hem işlem zorluğu bölüm numarasına göre otomatik belirlenir.
+
+**Oynanış — grid boyutu ve zorluk eşlemesi (bölüm numarasına göre):**
+
+| Bölüm aralığı | Grid boyutu | Zorluk (mevcut `DifficultyLevel`) |
+|---|---|---|
+| 1-10 | 1x2 (tek hücrede gerçek bir seçim olmaz, en az iki hücre) | Kolay |
+| 11-20 | 2x2 | Orta |
+| 21-40 | 3x3 | Zor |
+| 41+ | 4x4 (orada sabit kalır, sonsuza kadar büyümez) | Uzman |
+
+**Süre mekaniği:** Diğer iki modun aksine bölüm başına ayrı bir süre yoktur — koşunun tamamı boyunca **tek bir eriyen sayaç** vardır (başlangıç: 45 saniye). Her doğru cevapta sayaca **+3 saniye** bonus eklenir; **yanlış cevapta süre cezası yoktur**, sadece can gider. İlk 10 bölüm (1x2 grid) neredeyse anında geçildiği için oyuncu bölüm 11'e girerken ~30 saniyelik bir "ısınma payı" biriktirmiş olur; grid büyüyüp işlemler zorlaştıkça bölüm başına gerçek çözüm süresi 3 saniyeyi aşmaya başlar ve bu tampon doğal olarak erir — ayrı bir zorluk eğrisi koduna gerek kalmadan "hızlı kalmalı" baskısını üretir.
+
+**Kurallar:**
+- Yanlış cevapta hücre kırmızıya döner, can bir azalır, ama **bölüm/grid/hedef değişmez** — Sayı Avı'ndaki yanlış cevap davranışının birebir aynısı, sadece "bölüm ilerlemez" ek kuralıyla.
+- Bitiş koşulları sadece süre dolması veya canların tükenmesidir — Seçenek B'deki gibi bir "tam temizleme/seviye tamamlandı" kazanma durumu **yoktur** (Tırmanış sonsuz bir hayatta kalma modudur).
+- Can, kombo/hız skor bonusu Sayı Avı ile birebir aynı mekanikleri kullanır (bkz. Bölüm 6).
+- En iyi skorlar diğer modlardan bağımsız, ayrı iki rekorla tutulur: **en iyi ulaşılan bölüm** ve **en iyi skor** (diğer modlardaki gibi seviye başına ayrı bir tablo yoktur, çünkü Tırmanış'ta seçilebilir bir seviye kavramı yoktur).
+
+**Uygulama:** `lib/logic/climb_game_controller.dart` (`ClimbGameController`), bölüm→(grid boyutu, zorluk) eşlemesi `lib/logic/climb_progression.dart` (`climbColumnsForRound`/`climbLevelForRound`), grid üretimi mevcut `lib/logic/problem_generator.dart`'taki `generateGrid` (değişiklik gerekmedi, `count` zaten parametrik), ekranlar `lib/screens/climb_game_screen.dart` ve `lib/screens/climb_result_screen.dart`, bölüm rozeti `lib/widgets/climb_status_widget.dart`. Skor kaydı `lib/services/score_service.dart`'taki `getClimbBestRound`/`submitClimbBestRound`/`getClimbBestScore`/`submitClimbBestScore`. `ModeSelectScreen`'deki (bkz. Bölüm 10) "Tırmanış" kartından seçilir; kart, diğer modların aksine `LevelSelectScreen`'i atlayıp doğrudan `ClimbGameScreen`'e gider.
 
 ---
 
@@ -151,14 +179,15 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 ## 10. Ekranlar (Screens)
 
 1. **Ana Menü:** Oyna, Mod Seç, Skor Tablosu, Ayarlar. Oyun **yalnızca** "Oyna" butonuna basıldığında başlar; Mod Seç akışının kendisi oyunu başlatmaz (bkz. madde 2-4).
-2. **Mod Seçim Ekranı (uygulandı):** "Seviye Seç" (Sayı Avı) ve "Eşleştirme Modu" butonlarının birleştiği tek giriş noktası — oyuncu önce Sayı Avı / Eşleştirme kartlarından birine dokunur, ardından ortak Seviye Seçim Ekranı'na yönlenir. Daha önce bu iki mod ana menüde ayrı butonlardan (ve "Oyna" her zaman doğrudan Sayı Avı'na atlayarak) seçiliyordu; bu tutarsızlık giderildi. Uygulama: `lib/screens/mode_select_screen.dart` (`ModeSelectScreen`).
-3. **Seviye Seçim Ekranı:** Kolay / Orta / Zor / Uzman kartları. Hem Sayı Avı hem Eşleştirme modu bu ekranı `GameMode` parametresiyle paylaşır. Bir seviye seçildiğinde mod da "son oynanan" olarak kaydedilir (`ScoreService.setLastLevel` / `setLastMode`).
-4. **İşlem Türü Seç Ekranı:** Toplama/Çıkarma/Çarpma/Bölme seçimi; iki mod tarafından da paylaşılır. **"Kaydet"e basmak oyunu başlatmaz** — seçilen işlem türlerini kaydeder (`ScoreService.setLastOperations`) ve doğrudan Ana Menü'ye döner ("Hazır! Başlamak için 'Oyna'ya dokun" bildirimiyle). Mod Seç akışının (mod → seviye → işlem türü) tek görevi, "Oyna" butonunun kullanacağı kombinasyonu hazırlamaktır; asıl oyun her zaman Ana Menü'deki "Oyna" butonuyla başlar — bu, en son kaydedilen mod + seviye + işlem türü kombinasyonunu okuyup (`MainMenuScreen._quickPlay`) hiçbir ara ekran göstermeden ilgili oyun ekranına gider.
+2. **Mod Seçim Ekranı (uygulandı):** "Seviye Seç" (Sayı Avı), "Eşleştirme Modu" ve "Tırmanış" kartlarının birleştiği tek giriş noktası — Sayı Avı / Eşleştirme kartları ortak Seviye Seçim Ekranı'na yönlenir; **Tırmanış kartı bu akışı atlar** ve doğrudan kendi oyun ekranına gider (grid boyutu/zorluk bölüm numarasına göre otomatik belirlendiği için ayrı bir seçim gerekmez — bkz. Bölüm 3b). Daha önce bu iki mod (Sayı Avı, Eşleştirme) ana menüde ayrı butonlardan (ve "Oyna" her zaman doğrudan Sayı Avı'na atlayarak) seçiliyordu; bu tutarsızlık giderildi. Uygulama: `lib/screens/mode_select_screen.dart` (`ModeSelectScreen`).
+3. **Seviye Seçim Ekranı:** Kolay / Orta / Zor / Uzman kartları. Sayı Avı ve Eşleştirme modu bu ekranı `GameMode` parametresiyle paylaşır (Tırmanış kullanmaz). Bir seviye seçildiğinde mod da "son oynanan" olarak kaydedilir (`ScoreService.setLastLevel` / `setLastMode`).
+4. **İşlem Türü Seç Ekranı:** Toplama/Çıkarma/Çarpma/Bölme seçimi; Sayı Avı ve Eşleştirme tarafından paylaşılır (Tırmanış kullanmaz). **"Kaydet"e basmak oyunu başlatmaz** — seçilen işlem türlerini kaydeder (`ScoreService.setLastOperations`) ve doğrudan Ana Menü'ye döner ("Hazır! Başlamak için 'Oyna'ya dokun" bildirimiyle). Mod Seç akışının (mod → seviye → işlem türü) tek görevi, "Oyna" butonunun kullanacağı kombinasyonu hazırlamaktır; asıl oyun her zaman Ana Menü'deki "Oyna" butonuyla başlar — bu, en son kaydedilen mod + seviye + işlem türü kombinasyonunu okuyup (`MainMenuScreen._quickPlay`) hiçbir ara ekran göstermeden ilgili oyun ekranına gider (Tırmanış son oynanan modsa level/operations hiç okunmadan doğrudan `ClimbGameScreen`'e gider).
 5. **Oyun Ekranı (Sayı Avı):** 4x6 grid + üstte hedef sayı + süre sayacı + skor.
 6. **Oyun Ekranı (Eşleştirme):** 4x6 grid + üstte kalan çift sayısı + süre sayacı + skor (bkz. Bölüm 3a).
-7. **Sonuç Ekranı:** Toplam skor, doğru/yanlış (veya eşleşen çift/yanlış deneme) sayısı, en iyi skor, "Tekrar Oyna" / "Ana Menü" butonları. Her modun kendi sonuç ekranı vardır.
-8. **Skor Tablosu:** Her iki modun (Sayı Avı, Eşleştirme) seviye başına en iyi skorlarını ayrı ayrı gösterir.
-9. **Ayarlar:** Ses aç/kapa, zorluk varsayılanı, dil seçimi (opsiyonel çoklu dil desteği).
+7. **Oyun Ekranı (Tırmanış):** Bölüme göre büyüyen grid (1x2→2x2→3x3→4x4) + üstte hedef sayı + bölüm rozeti ("Bölüm: 7") + tek eriyen süre sayacı + skor (bkz. Bölüm 3b).
+8. **Sonuç Ekranı:** Toplam skor, doğru/yanlış (veya eşleşen çift/yanlış deneme, veya ulaşılan bölüm/doğru) sayısı, en iyi skor (Tırmanış'ta ayrıca en iyi bölüm), "Tekrar Oyna" / "Ana Menü" butonları. Her modun kendi sonuç ekranı vardır.
+9. **Skor Tablosu:** Sayı Avı ve Eşleştirme için seviye başına en iyi skorları ayrı ayrı gösterir; Tırmanış için (seçilebilir bir seviye olmadığından) tek bir özet kart — "En iyi bölüm" ve "En iyi skor" — gösterir.
+10. **Ayarlar:** Ses aç/kapa, zorluk varsayılanı, dil seçimi (opsiyonel çoklu dil desteği).
 
 ---
 
@@ -183,31 +212,36 @@ lib/
     math_problem.dart       // işlem, sonuç, zorluk seviyesi modeli
     grid_cell.dart          // hücre durumu (idle, selected, correct, wrong, empty)
     difficulty_level.dart   // seviye + işlem türü tanımları
-    game_mode.dart          // GameMode: hunt (Sayı Avı) / match (Eşleştirme)
+    game_mode.dart          // GameMode: hunt (Sayı Avı) / match (Eşleştirme) / climb (Tırmanış)
   logic/
     problem_generator.dart      // rastgele işlem üretimi + eşleştirme çift üretimi
     game_controller.dart        // Sayı Avı state yönetimi (skor, süre, grid durumu)
     match_game_controller.dart  // Eşleştirme modu state yönetimi (bkz. Bölüm 3a)
-    game_constants.dart         // GameStatus, gridSize, maxLives — iki mod da paylaşır
-    grid_playable.dart          // GridWidget'ın ihtiyaç duyduğu ortak arayüz
+    climb_game_controller.dart  // Tırmanış modu state yönetimi (bkz. Bölüm 3b)
+    climb_progression.dart      // bölüm -> (grid boyutu, zorluk) eşlemesi (bkz. Bölüm 3b)
+    game_constants.dart         // GameStatus, gridSize, maxLives — üç mod da paylaşır
+    grid_playable.dart          // GridWidget'ın ihtiyaç duyduğu ortak arayüz (columns dahil)
   screens/
     main_menu_screen.dart
     mode_select_screen.dart      // "Oyna" ve mod seçiminin tek giriş noktası
-    level_select_screen.dart     // mode: GameMode parametresiyle her iki mod için de kullanılır
-    operation_select_screen.dart // mode: GameMode parametresiyle her iki mod için de kullanılır
+    level_select_screen.dart     // mode: GameMode parametresiyle Sayı Avı/Eşleştirme için kullanılır
+    operation_select_screen.dart // mode: GameMode parametresiyle Sayı Avı/Eşleştirme için kullanılır
     game_screen.dart             // Sayı Avı oyun ekranı
     match_game_screen.dart       // Eşleştirme modu oyun ekranı
+    climb_game_screen.dart       // Tırmanış modu oyun ekranı
     result_screen.dart           // Sayı Avı sonuç ekranı
     match_result_screen.dart     // Eşleştirme modu sonuç ekranı
+    climb_result_screen.dart     // Tırmanış modu sonuç ekranı
     scoreboard_screen.dart
     settings_screen.dart
   widgets/
     grid_widget.dart
     grid_cell_widget.dart
     timer_widget.dart
-    target_number_widget.dart   // Sayı Avı: "Bul: 12"
+    target_number_widget.dart   // Sayı Avı ve Tırmanış: "Bul: 12"
     match_status_widget.dart    // Eşleştirme: "Kalan çift: 5"
-    lives_badge.dart            // iki mod da paylaşır
+    climb_status_widget.dart    // Tırmanış: "Bölüm: 7"
+    lives_badge.dart            // üç mod da paylaşır
   services/
     audio_service.dart
     score_service.dart      // yerel skor kaydı (shared_preferences), moda göre ayrı anahtar
@@ -252,6 +286,9 @@ class GridCell {
 - [ ] Ses efektleri çalışıyor ve kapatılabiliyor.
 - [x] Eşleştirme modu: 4x6 grid, sonucu eşit iki hücre eşleştirilince ikisi de yok oluyor; yanlış eşleştirmede ikisi de kırmızıya dönüp normale dönüyor.
 - [x] Eşleştirme modunda da seviye ve işlem türü seçilebiliyor, can/süre mekaniği Sayı Avı ile aynı.
+- [x] Tırmanış modu: grid boyutu bölüm numarasına göre büyüyor (1x2→2x2→3x3→4x4, orada sabitleniyor), işlem zorluğu aynı eşiklerde otomatik artıyor.
+- [x] Tırmanış modunda tek bir eriyen süre sayacı var, doğru cevapta küçük bir bonusla besleniyor; yanlış cevap sadece can azaltıyor, bölümü/gridi sıfırlamıyor.
+- [x] Tırmanış modunda en iyi ulaşılan bölüm ve en iyi skor ayrı ayrı kaydediliyor ve Skor Tablosu'nda gösteriliyor.
 
 ---
 

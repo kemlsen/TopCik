@@ -1,5 +1,5 @@
-/// The two playable game modes (bkz. CLAUDE.md Bölüm 3 ve Bölüm 3a).
-enum GameMode { hunt, match }
+/// The three playable game modes (bkz. CLAUDE.md Bölüm 3, 3a ve 3b).
+enum GameMode { hunt, match, climb }
 
 extension GameModeInfo on GameMode {
   String get displayName {
@@ -8,6 +8,8 @@ extension GameModeInfo on GameMode {
         return 'Sayı Avı';
       case GameMode.match:
         return 'Eşleştirme';
+      case GameMode.climb:
+        return 'Tırmanış';
     }
   }
 
@@ -17,6 +19,8 @@ extension GameModeInfo on GameMode {
         return 'Hedef sayıyı bul, doğru işlemi yakala!';
       case GameMode.match:
         return 'Sonucu aynı olan iki işlemi eşleştir!';
+      case GameMode.climb:
+        return 'Kolaydan başla, bölüm bölüm zirveye tırman!';
     }
   }
 }

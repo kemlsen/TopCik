@@ -13,6 +13,8 @@ class ScoreService {
   static const _lastLevelKey = 'last_level';
   static const _lastModeKey = 'last_mode';
   static const _lastOperationsKey = 'last_operations';
+  static const _climbBestRoundKey = 'best_round_climb';
+  static const _climbBestScoreKey = 'best_score_climb';
 
   String _bestScoreKey(DifficultyLevel level, GameMode mode) {
     return mode == GameMode.hunt
@@ -96,6 +98,42 @@ class ScoreService {
     final current = prefs.getInt(key) ?? 0;
     if (score > current) {
       await prefs.setInt(key, score);
+      return true;
+    }
+    return false;
+  }
+
+  /// Tırmanış modu, ayrı bir DifficultyLevel seçimi olmadığı için düz
+  /// (level'sız) anahtarlarla en iyi ulaşılan bölümü ve en iyi skoru saklar.
+  Future<int> getClimbBestRound() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_climbBestRoundKey) ?? 0;
+  }
+
+  /// Saves [round] as the new best round reached if it beats the previous
+  /// best. Returns true when a new best was set.
+  Future<bool> submitClimbBestRound(int round) async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getInt(_climbBestRoundKey) ?? 0;
+    if (round > current) {
+      await prefs.setInt(_climbBestRoundKey, round);
+      return true;
+    }
+    return false;
+  }
+
+  Future<int> getClimbBestScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_climbBestScoreKey) ?? 0;
+  }
+
+  /// Saves [score] as the new best climb score if it beats the previous
+  /// best. Returns true when a new best was set.
+  Future<bool> submitClimbBestScore(int score) async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getInt(_climbBestScoreKey) ?? 0;
+    if (score > current) {
+      await prefs.setInt(_climbBestScoreKey, score);
       return true;
     }
     return false;

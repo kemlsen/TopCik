@@ -5,44 +5,43 @@ import '../models/difficulty_level.dart';
 import '../models/grid_cell.dart';
 import '../services/audio_service.dart';
 import '../services/score_service.dart';
+import 'climb_progression.dart';
 import 'game_constants.dart';
 import 'grid_playable.dart';
 import 'problem_generator.dart';
 
-export 'game_constants.dart';
-
-/// Summary handed to the result screen once a run ends.
-class GameResult {
-  final DifficultyLevel level;
-  final Set<Operation> operations;
+/// Summary handed to the climb-mode result screen once a run ends.
+class ClimbGameResult {
+  final int round;
   final int score;
   final int correctCount;
   final int wrongCount;
-  final bool isNewBest;
-  final bool levelCompleted;
+  final bool isNewBestRound;
+  final bool isNewBestScore;
   final bool outOfLives;
 
-  const GameResult({
-    required this.level,
-    required this.operations,
+  const ClimbGameResult({
+    required this.round,
     required this.score,
     required this.correctCount,
     required this.wrongCount,
-    required this.isNewBest,
-    required this.levelCompleted,
-    this.outOfLives = false,
+    required this.isNewBestRound,
+    required this.isNewBestScore,
+    required this.outOfLives,
   });
 }
 
-/// Owns all live game state for the grid screen: the problem grid,
-/// the current target number, score, combo streak and the countdown timer.
-///
-/// Uses "Seçenek B — Azalan Grid" (Bölüm 3): cells empty out as they are
-/// solved and the level ends once all [gridSize] cells are cleared.
-class GameController extends GridPlayable {
-  GameController({
-    required this.level,
-    required this.operations,
+/// Owns all live game state for Tırmanış modu (bkz. CLAUDE.md Bölüm 3b): a
+/// single continuous run split into short "bölüm"s whose grid grows
+/// (1x2 -> 2x2 -> 3x3 -> 4x4, sabitlenir) and whose arithmetic difficulty
+/// scales in lockstep (bkz. [climbColumnsForRound]/[climbLevelForRound]).
+/// Finding the target cell instantly advances to the next round with a
+/// freshly generated grid; there is a single depleting run timer (not
+/// per-round) that gets a small bonus on every correct answer, so the
+/// player must keep a fast pace or run out. A wrong answer costs a life
+/// but does NOT reset the round — the same grid/target persists.
+class ClimbGameController extends GridPlayable {
+  ClimbGameController({
     required AudioService audioService,
     required ScoreService scoreService,
     ProblemGenerator? generator,
@@ -53,20 +52,21 @@ class GameController extends GridPlayable {
        _generator = generator ?? ProblemGenerator(random: random),
        _random = random ?? Random();
 
-  final DifficultyLevel level;
-
-  /// Kullanıcının işlem türü seçim ekranında işaretlediği işlemler
-  /// (Toplama/Çıkarma/Çarpma/Bölme veya "Hepsi").
-  final Set<Operation> operations;
   final AudioService _audio;
   final ScoreService _scoreService;
   final ProblemGenerator _generator;
   final Random _random;
 
+  static const int initialTimeBudgetSeconds = 45;
+  static const int timeBonusPerCorrectSeconds = 3;
+
   @override
   late List<GridCell> cells;
   @override
-  int get columns => gridColumns;
+  int get columns => climbGridShapeForRound(round).columns;
+
+  int round = 1;
+  late DifficultyLevel level;
   late int targetNumber;
   int score = 0;
   int correctCount = 0;
@@ -81,17 +81,15 @@ class GameController extends GridPlayable {
   int? wrongIndex;
 
   Timer? _timer;
-  DateTime _targetSetAt = DateTime.now();
+  DateTime _roundStartedAt = DateTime.now();
   bool _disposed = false;
 
-  /// Called once the run ends (grid cleared or time ran out).
-  void Function(GameResult result)? onGameEnd;
+  /// Called once the run ends (time ran out or lives ran out — Tırmanış
+  /// modunda "tam temizleme" ile biten bir kazanma durumu yok).
+  void Function(ClimbGameResult result)? onGameEnd;
 
   void start() {
-    cells = _generator
-        .generateGrid(level, operations: operations, count: gridSize)
-        .map((problem) => GridCell(problem: problem))
-        .toList();
+    round = 1;
     score = 0;
     correctCount = 0;
     wrongCount = 0;
@@ -99,13 +97,27 @@ class GameController extends GridPlayable {
     livesRemaining = maxLives;
     wrongIndex = null;
     status = GameStatus.playing;
-    timeRemainingSeconds = level.timeLimitSeconds;
-    targetNumber = _pickTarget();
-    _targetSetAt = DateTime.now();
+    timeRemainingSeconds = initialTimeBudgetSeconds;
+    _generateRound();
 
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     notifyListeners();
+  }
+
+  /// Generates the current [round]'s grid/target without touching
+  /// score/lives/time — unlike hunt modu, her bölümde grid tamamen
+  /// yenilenir (tek hücre boşaltılmaz), bu yüzden yeni grid'in tüm
+  /// hücreleri zaten idle olur.
+  void _generateRound() {
+    level = climbLevelForRound(round);
+    final shape = climbGridShapeForRound(round);
+    cells = _generator
+        .generateGrid(level, operations: level.operations.toSet(), count: shape.cellCount)
+        .map((problem) => GridCell(problem: problem))
+        .toList();
+    targetNumber = cells[_random.nextInt(cells.length)].problem.answer;
+    _roundStartedAt = DateTime.now();
   }
 
   void _tick() {
@@ -116,7 +128,7 @@ class GameController extends GridPlayable {
     }
     if (timeRemainingSeconds <= 0) {
       timeRemainingSeconds = 0;
-      _endGame(levelCompleted: false);
+      _endGame(outOfLives: false);
       return;
     }
     notifyListeners();
@@ -140,18 +152,14 @@ class GameController extends GridPlayable {
     comboStreak++;
     correctCount++;
     score += _scoreForAnswer();
+    timeRemainingSeconds += timeBonusPerCorrectSeconds;
     _audio.playCorrect();
     notifyListeners();
 
     Future.delayed(correctAnimationDuration, () {
       if (_disposed) return;
-      cells[index].state = CellState.empty;
-      if (cells.every((c) => c.state == CellState.empty)) {
-        _endGame(levelCompleted: true);
-        return;
-      }
-      targetNumber = _pickTarget();
-      _targetSetAt = DateTime.now();
+      round++;
+      _generateRound();
       notifyListeners();
     });
   }
@@ -170,7 +178,7 @@ class GameController extends GridPlayable {
       cells[index].state = CellState.idle;
       if (wrongIndex == index) wrongIndex = null;
       if (livesRemaining <= 0) {
-        _endGame(levelCompleted: false, outOfLives: true);
+        _endGame(outOfLives: true);
         return;
       }
       notifyListeners();
@@ -179,7 +187,7 @@ class GameController extends GridPlayable {
 
   int _scoreForAnswer() {
     const base = 10;
-    final elapsedMs = DateTime.now().difference(_targetSetAt).inMilliseconds;
+    final elapsedMs = DateTime.now().difference(_roundStartedAt).inMilliseconds;
     int speedBonus;
     if (elapsedMs < 2000) {
       speedBonus = 10;
@@ -192,43 +200,22 @@ class GameController extends GridPlayable {
     return base + speedBonus + comboBonus;
   }
 
-  /// Picks a target number from among the still-unsolved cells. Bölüm 4:
-  /// several cells may share the same answer — any of them is valid.
-  int _pickTarget() {
-    final candidates = cells
-        .where((c) => c.state == CellState.idle)
-        .map((c) => c.problem.answer)
-        .toList();
-    return candidates[_random.nextInt(candidates.length)];
-  }
-
-  Future<void> _endGame({
-    required bool levelCompleted,
-    bool outOfLives = false,
-  }) async {
+  Future<void> _endGame({required bool outOfLives}) async {
     _timer?.cancel();
-    status = levelCompleted
-        ? GameStatus.levelComplete
-        : (outOfLives ? GameStatus.outOfLives : GameStatus.timeUp);
-    if (levelCompleted) {
-      // Bölüm 6 — süre bonusu: kalan süreye göre ekstra puan.
-      score += timeRemainingSeconds * 2;
-      _audio.playLevelComplete();
-    } else {
-      _audio.playTimeUp();
-    }
+    status = outOfLives ? GameStatus.outOfLives : GameStatus.timeUp;
+    _audio.playTimeUp();
     notifyListeners();
 
-    final isNewBest = await _scoreService.submitScore(level, score);
+    final isNewBestRound = await _scoreService.submitClimbBestRound(round);
+    final isNewBestScore = await _scoreService.submitClimbBestScore(score);
     onGameEnd?.call(
-      GameResult(
-        level: level,
-        operations: operations,
+      ClimbGameResult(
+        round: round,
         score: score,
         correctCount: correctCount,
         wrongCount: wrongCount,
-        isNewBest: isNewBest,
-        levelCompleted: levelCompleted,
+        isNewBestRound: isNewBestRound,
+        isNewBestScore: isNewBestScore,
         outOfLives: outOfLives,
       ),
     );

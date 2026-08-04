@@ -6,6 +6,7 @@ import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_symbols_background.dart';
 import '../widgets/math_logo_emblem.dart';
+import 'climb_game_screen.dart';
 import 'game_screen.dart';
 import 'match_game_screen.dart';
 import 'mode_select_screen.dart';
@@ -26,8 +27,21 @@ class MainMenuScreen extends StatelessWidget {
   /// seviye + işlem türü kombinasyonuyla, ara ekranlar olmadan doğrudan
   /// oyunu başlatır.
   Future<void> _quickPlay(BuildContext context) async {
-    final level = await scoreService.getLastLevel();
     final mode = await scoreService.getLastMode();
+    if (mode == GameMode.climb) {
+      if (!context.mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ClimbGameScreen(
+            audioService: audioService,
+            scoreService: scoreService,
+          ),
+        ),
+      );
+      return;
+    }
+
+    final level = await scoreService.getLastLevel();
     final operations = await scoreService.getLastOperations(level);
     if (!context.mounted) return;
     Navigator.of(context).push(

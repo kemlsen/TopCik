@@ -5,16 +5,19 @@ import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/gradient_scaffold.dart';
+import 'climb_game_screen.dart';
 import 'level_select_screen.dart';
 
 const _modeColors = {
   GameMode.hunt: AppColors.levelMedium,
   GameMode.match: AppColors.levelHard,
+  GameMode.climb: AppColors.levelEasy,
 };
 
 const _modeIcons = {
   GameMode.hunt: Icons.grid_view_rounded,
   GameMode.match: Icons.join_full_rounded,
+  GameMode.climb: Icons.terrain_rounded,
 };
 
 /// Ana menüdeki eski "Seviye Seç" ve "Eşleştirme Modu" butonlarının
@@ -30,6 +33,35 @@ class ModeSelectScreen extends StatelessWidget {
     required this.scoreService,
   });
 
+  /// Tırmanış modu Seviye Seç / İşlem Türü Seç akışını atlar ve doğrudan
+  /// oyuna girer, bu yüzden "son oynanan mod" kaydını (diğer modlarda
+  /// `LevelSelectScreen._startLevel` içinde yapılan işi) burada kendisi
+  /// yapmalı.
+  Future<void> _handleModeTap(BuildContext context, GameMode mode) async {
+    if (mode == GameMode.climb) {
+      await scoreService.setLastMode(mode);
+      if (!context.mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ClimbGameScreen(
+            audioService: audioService,
+            scoreService: scoreService,
+          ),
+        ),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LevelSelectScreen(
+          mode: mode,
+          audioService: audioService,
+          scoreService: scoreService,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GradientScaffold(
@@ -42,15 +74,7 @@ class ModeSelectScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: _ModeCard(
                   mode: mode,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => LevelSelectScreen(
-                        mode: mode,
-                        audioService: audioService,
-                        scoreService: scoreService,
-                      ),
-                    ),
-                  ),
+                  onTap: () => _handleModeTap(context, mode),
                 ),
               ),
             )

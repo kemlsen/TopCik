@@ -63,6 +63,8 @@ class MatchGameController extends GridPlayable {
 
   @override
   late List<GridCell> cells;
+  @override
+  int get columns => gridColumns;
   int score = 0;
   int matchedPairs = 0;
   int wrongAttempts = 0;
