@@ -6,6 +6,9 @@ import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/gradient_scaffold.dart';
 
+/// Tırmanış ana oyun modu olduğu için skor tablosunda ilk sırada gösterilir.
+const _modeOrder = [GameMode.climb, GameMode.hunt, GameMode.match];
+
 class ScoreboardScreen extends StatelessWidget {
   final ScoreService scoreService;
 
@@ -18,7 +21,7 @@ class ScoreboardScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
         children: [
-          for (final mode in GameMode.values) ...[
+          for (final mode in _modeOrder) ...[
             Padding(
               padding: const EdgeInsets.only(bottom: 10, top: 6),
               child: Text(

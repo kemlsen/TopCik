@@ -8,6 +8,9 @@ import '../widgets/gradient_scaffold.dart';
 import 'climb_game_screen.dart';
 import 'level_select_screen.dart';
 
+/// Tırmanış ana oyun modu olduğu için ekranda ilk sırada gösterilir.
+const _modeOrder = [GameMode.climb, GameMode.hunt, GameMode.match];
+
 const _modeColors = {
   GameMode.hunt: AppColors.levelMedium,
   GameMode.match: AppColors.levelHard,
@@ -68,7 +71,7 @@ class ModeSelectScreen extends StatelessWidget {
       title: 'Mod Seç',
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-        children: GameMode.values
+        children: _modeOrder
             .map(
               (mode) => Padding(
                 padding: const EdgeInsets.only(bottom: 16),
