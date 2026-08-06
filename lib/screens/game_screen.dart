@@ -91,7 +91,7 @@ class _GameScreenState extends State<GameScreen> {
                       children: [
                         TimerWidget(
                           remainingSeconds: _controller.timeRemainingSeconds,
-                          totalSeconds: widget.level.timeLimitSeconds,
+                          totalSeconds: GameController.initialTimeBudgetSeconds,
                         ),
                         Expanded(
                           child: Center(

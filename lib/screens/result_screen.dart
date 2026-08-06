@@ -22,9 +22,7 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = result.levelCompleted
-        ? 'Tebrikler! 🎉'
-        : (result.outOfLives ? 'Deneme Hakkın Bitti!' : 'Süre Doldu!');
+    final title = result.outOfLives ? 'Deneme Hakkın Bitti!' : 'Süre Doldu!';
 
     return Scaffold(
       body: Container(

@@ -11,53 +11,50 @@ Bu dosya, Claude Code (veya başka bir AI kodlama asistanı) ile bu projeyi geli
 **Hedef Kitle:** Çocuklar (7-12 yaş), matematiksel zeka ve işlem hızı gelişimi
 
 **Temel Fikir:**
-Oyunun üç modu vardır — Sayı Avı ve Eşleştirme aynı 4x6 grid, can ve süre mekaniğini paylaşır, sadece hücrelerle etkileşim kuralı değişir; Tırmanış ise aynı can mekaniğini paylaşsa da kendi grid-büyüme ve tek-süre kurallarına sahiptir:
+Oyunun üç modu vardır — üçü de aynı can mekaniğini ve aynı temel ilkeyi paylaşır: **bitiş koşulu her zaman süre veya canların tükenmesidir**, hiçbirinde "grid'i tamamen bitirince kazanılır" diye bir durum yoktur — her mod, o süre içinde ne kadar yapıp puan toplayabileceğine dayanan sürekli bir koşudur. Sayı Avı ve Tırmanış aynı "hedefi bul" etkileşimini paylaşır (grid boyutu ikisinde de aynı `gridShapeForLevel`/`climbGridShapeForRound` eşlemesinden gelir); farkları, Sayı Avı'nda seviye ve işlem türünün oyuncu tarafından seçilebilir olması ve grid boyutunun koşu boyunca seçilen seviyede sabit kalmasıdır — Tırmanış'ta ise seçim yoktur, grid boyutu ve zorluk bölüm numarasına göre otomatik büyür. Eşleştirme kendi çift-bulma etkileşimini ve kendi (seviyeye göre sabit) grid boyutunu/başlangıç süresini korur, ama o da aynı "tek eriyen süre + doğru cevapta bonus + tam yenilenen grid" ilkesini kullanır:
 
-- **Sayı Avı modu:** Ekranda 4x6 boyutunda bir grid (24 hücre) bulunur. Her hücrede bir matematiksel işlem (örn: `7 + 5`, `12 - 4`, `3 x 6`) gösterilir. Oyuncuya ekranın üstünde (veya ayrı bir alanda) bir **hedef sayı** (cevap) gösterilir. Oyuncu, gridde bu hedef sayıya eşit sonucu veren hücreyi bulup dokunur.
-  - **Doğru cevap** → o hücre yok olur (fade-out / patlama animasyonu), yeni bir işlem ve hedef sayı gelir.
-  - **Yanlış cevap** → o hücre kırmızıya döner, ekranda "Yanlış!" yazısı belirir, kısa bir titreşim/ses efekti olur, hücre eski haline döner (işlemi kalır, tekrar denenebilir).
-  - **Süre** sınırlıdır. Süre dolmadan mümkün olduğunca çok doğru cevap verilmeye çalışılır.
-- **Eşleştirme modu:** (bkz. Bölüm 3a) Aynı 4x6 grid, ama hedef sayı yok. Grid, sonucu birbirine eşit olan iki farklı işlemden oluşan 12 çift içerir (örn. `3 + 4` ve `10 - 3`, ikisi de `7`). Oyuncu sırayla iki hücreye dokunarak sonucu aynı olan çifti bulmaya çalışır.
+- **Sayı Avı modu:** Oyuncunun seçtiği seviyeye göre sabit boyutlu bir grid gösterilir (Kolay: 1x2, Orta: 2x2, Zor: 3x3, Uzman: 4x4 — bkz. Bölüm 2). Her hücrede bir matematiksel işlem (örn: `7 + 5`, `12 - 4`, `3 x 6`) gösterilir. Oyuncuya ekranın üstünde bir **hedef sayı** (cevap) gösterilir. Oyuncu, gridde bu hedef sayıya eşit sonucu veren hücreyi bulup dokunur.
+  - **Doğru cevap** → grid anında tamamen yenilenir (yeni işlemler + yeni hedef sayı), tek eriyen süre sayacına küçük bir bonus eklenir.
+  - **Yanlış cevap** → o hücre kırmızıya döner, ekranda "Yanlış!" yazısı belirir, kısa bir titreşim/ses efekti olur, hücre eski haline döner (işlemi kalır, tekrar denenebilir); süre etkilenmez, sadece can azalır.
+  - **Süre**, tek bir eriyen sayaçtır (45 sn). Süre dolmadan (veya can bitmeden) 45 saniyede mümkün olduğunca çok doğru cevap vermeye çalışılır.
+- **Eşleştirme modu:** (bkz. Bölüm 3a) Kendi seviyeye-göre-sabit grid boyutunu ve seviyeye göre sabit başlangıç süresini kullanır. Hedef sayı yoktur. Grid, sonucu birbirine eşit olan iki farklı işlemden oluşan çiftlerden oluşur (örn. `3 + 4` ve `10 - 3`, ikisi de `7`). Oyuncu sırayla iki hücreye dokunarak sonucu aynı olan çifti bulmaya çalışır; seçilen seviyenin tüm çiftleri eşleşince grid anında yeni bir çift setiyle değiştirilir (Sayı Avı gibi — o sürede ne kadar eşleştirip puan toplarsan skorun o olur).
 - **Tırmanış modu:** (bkz. Bölüm 3b) Sayı Avı'nın "hedefi bul" etkileşimini kullanır, ama tek, sürekli akan bir koşuda grid boyutu ve zorluk bölüm bölüm büyür (1x2 → 2x2 → 3x3 → 4x4). Hedefi bulmak anında bir sonraki bölüme geçirir; tek bir eriyen süre sayacı, her doğru cevapta küçük bir bonusla beslenir.
 
 ---
 
-## 2. Temel Oyun Döngüsü (Game Loop)
+## 2. Temel Oyun Döngüsü (Game Loop) — Sayı Avı
 
-1. Oyun başlar → 4x6 grid, 24 farklı matematik işlemiyle doldurulur.
-2. Üstte/altta bir **hedef sayı** gösterilir (bu sayı, gridteki işlemlerden birinin doğru cevabıdır).
-3. Süre sayacı başlar (örn. 90-135 saniye, seviyeye göre ayarlanabilir; büyütülmüş 24 hücrelik grid için 4x4/16 hücrelik özgün süre değerlerinin 1.5 katı).
+1. Oyuncu Mod Seç → Seviye Seç → İşlem Türü Seç akışıyla bir kombinasyon hazırlar (veya Ana Menü'deki "Oyna" en son kaydedilen kombinasyonu kullanır) → seçilen seviyeye göre sabit boyutlu bir grid doldurulur: Kolay 1x2, Orta 2x2, Zor 3x3, Uzman 4x4 (bkz. `gridShapeForLevel`, Tırmanış'ın Bölüm 3b'de kullandığı eşlemeyle aynı kaynak).
+2. Üstte bir **hedef sayı** gösterilir (bu sayı, gridteki işlemlerden birinin doğru cevabıdır — grid her turda tamamen taze üretildiği için tüm hücreler aday olabilir).
+3. Tek bir **eriyen süre sayacı** başlar: 45 saniye (`GameController.initialTimeBudgetSeconds`).
 4. Oyuncu doğru hücreye dokunur:
-   - Hücre yok olma animasyonu oynatılır.
-   - Skor artar.
-   - O hücrenin yerine (opsiyonel) yeni bir işlem gelebilir **veya** grid azalarak devam eder (tasarım kararı — bkz. Bölüm 3).
-   - Yeni bir hedef sayı belirlenir.
+   - Hücre yok olma animasyonu oynatılır, skor artar.
+   - Süre sayacına +3 saniye bonus eklenir (`GameController.timeBonusPerCorrectSeconds`).
+   - Grid tamamen yeni bir işlem setiyle değiştirilir (aynı boyut, aynı seviye/işlem türleri), yeni bir hedef sayı belirlenir.
 5. Oyuncu yanlış hücreye dokunursa:
-   - Hücre kırmızı yanıp söner (0.3-0.5 sn).
-   - "Yanlış!" mesajı / ikon gösterilir.
-   - Can/skor cezası opsiyonel (bkz. Bölüm 6).
-   - Hücre normale döner, işlem yerinde kalır.
-6. Süre dolduğunda veya grid tamamen boşaldığında oyun biter → Skor ekranı gösterilir.
+   - Hücre kırmızı yanıp söner (0.3-0.5 sn), "Yanlış!" mesajı gösterilir.
+   - Can bir azalır (bkz. Bölüm 6); **süre etkilenmez**.
+   - Hücre normale döner, grid/hedef değişmez.
+6. Süre dolduğunda veya canlar tükendiğinde oyun biter → Skor ekranı gösterilir (kaç doğru cevap verildiği = mod özeti).
+
+Bu döngü, Tırmanış modunun (Bölüm 3b) mekaniğiyle birebir aynıdır — tek fark Tırmanış'ta grid boyutu/zorluğun bölüm numarasına göre otomatik büyümesi, Sayı Avı'nda ise oyuncunun seçtiği seviyede sabit kalmasıdır (seviye ve işlem türü seçilebilir olmaya devam eder). Eşleştirme modu (Bölüm 3a) kendi çift-bulma etkileşimini kullanır ama aynı "süre/can bitene kadar sür, grid tamamen bitince anında yenilen" ilkesini izler (bkz. Bölüm 3).
 
 ---
 
-## 3. Grid Doldurma Mantığı (Önemli Tasarım Kararı)
+## 3. Grid Doldurma Mantığı
 
-İki seçenek var, birini seçip uygulayın:
+Üç modun hepsi aynı ilkeyi paylaşır: **bitiş koşulu her zaman süre veya canların tükenmesidir**, "grid tamamen bitirildi" diye bir kazanma durumu hiçbir modda yoktur — her mod, o süre içinde ne kadar yapıp puan toplayabileceğine dayanan sürekli bir koşudur. Farklı olan, bir "tur"un nasıl tamamlanıp yenilendiğidir:
 
-### Seçenek A — "Sabit Grid, Yenilenen Hücre" (Önerilen, daha basit)
-- Grid hep 4x6 (24 hücre) dolu kalır.
-- Doğru cevap verilince o hücre boşalır, hemen ardından **yeni bir işlem** o hücreye yazılır.
-- Yeni hedef sayı belirlenir (mutlaka gridteki 24 işlemden en az birinin cevabı olacak şekilde).
-- Oyun süre bitene kadar sürer, skor = doğru cevap sayısı.
+### Sayı Avı ve Tırmanış — Tam Yenilenen Grid
+- Grid boyutu sabittir (Sayı Avı: seçilen seviyeye göre; Tırmanış: bölüm numarasına göre — bkz. Bölüm 2, 3b).
+- Doğru cevap verilince **tüm grid** anında yeni bir işlem setiyle değiştirilir (tek hücre boşaltılıp beklenmez); yeni hedef sayı bu taze gridden seçilir.
 
-### Seçenek B — "Azalan Grid" (Daha zorlayıcı, seviye tamamlama hissi verir)
-- Grid 24 işlemle başlar.
-- Doğru cevap verildikçe hücreler gerçekten boşalıp yok olur (o pozisyon boş kalır).
-- Tüm grid boşaldığında (24 doğru cevap) seviye biter → bir sonraki seviyeye geçilir (daha zor işlemler, belki 5x6 gibi büyüyen grid).
-- Süre, seviyeyi bitirmek için verilen süredir. Süre dolarsa oyun biter.
+### Eşleştirme modu — Azalan Grid, Tamamlanınca Anında Yenilenen
+- Grid, seviyeye göre sabit sayıda çiftle başlar (bkz. `matchGridShapeForLevel`, Bölüm 3a), boyutu sabit kalır.
+- Doğru eşleştirmelerde iki hücre gerçekten boşalıp yok olur (Seçenek B'nin özü, ama tek bir "tur"un içinde).
+- Seçilen seviyenin tüm çiftleri eşleşince (grid tamamen boşalınca) **oyun bitmez** — grid anında aynı boyutta taze bir çift setiyle değiştirilir ve koşu devam eder.
 
-**Öneri:** MVP için Seçenek B kullanılsın çünkü "bitirebilme" hissi ve seviye ilerlemesi çocuklar için daha motive edici. Seçenek A, sonsuz mod (endless mode) için kullanılabilir.
+Her üç modda da süre tek bir eriyen sayaçtır (Sayı Avı/Tırmanış: 45 sn'den başlar; Eşleştirme: seviyeye göre başlar — bkz. Bölüm 7), doğru cevapta/eşleştirmede küçük bir bonusla beslenir; yanlış cevapta/eşleştirmede süre cezası yoktur, sadece can gider (bkz. Bölüm 6).
 
 ---
 
@@ -65,7 +62,7 @@ Oyunun üç modu vardır — Sayı Avı ve Eşleştirme aynı 4x6 grid, can ve s
 
 Sayı Avı moduna ek olarak, aynı seviye/işlem türü seçim akışını paylaşan ikinci bir oyun modu: **Eşleştirme**.
 
-**Fikir:** 4x6 grid, 24 hücre = **12 çift**. Her çiftteki iki hücrenin işlemi farklıdır ama sonucu aynıdır (örn. `3 + 4` ve `10 - 3`, ikisi de `7`). Hedef sayı kutusu yoktur; onun yerine ekranda **kalan çift sayısı** gösterilir (örn. "Kalan çift: 5").
+**Fikir:** Grid boyutu, seçilen seviyeye göre sabittir (bkz. `matchGridShapeForLevel`, Sayı Avı'nın `gridShapeForLevel`'ıyla aynı büyüme mantığı): Kolay 2x2 (2 çift), Orta 2x4 (4 çift), Zor 3x4 (6 çift), Uzman 4x6 (12 çift — oyunun özgün sabit boyutu). Her çiftteki iki hücrenin işlemi farklıdır ama sonucu aynıdır (örn. `3 + 4` ve `10 - 3`, ikisi de `7`). Hedef sayı kutusu yoktur; onun yerine ekranda **kalan çift sayısı** gösterilir (örn. "Kalan çift: 5").
 
 **Oynanış:**
 1. Oyuncu bir hücreye dokunur → hücre vurgulanır (mavi glow + kalın kenarlık), "seçili" durumuna geçer.
@@ -73,15 +70,15 @@ Sayı Avı moduna ek olarak, aynı seviye/işlem türü seçim akışını payla
 3. Oyuncu ikinci bir hücreye dokunur:
    - **Sonuçlar eşitse** → iki hücre de yeşil parlama + küçülüp yok olma animasyonuyla kaybolur, skor artar, kalan çift sayısı azalır.
    - **Sonuçlar farklıysa** → iki hücre de kırmızıya döner, kısa süre "sallanır", "Eşleşmedi!" yazısı belirir, can bir azalır, sonra ikisi de normale döner (işlemler yerinde kalır).
-4. Tüm 12 çift eşleştirilince seviye tamamlanır (Seçenek B ile aynı mantık). Süre dolarsa veya can biterse oyun biter.
+4. Seçilen seviyenin tüm çiftleri eşleştirilince grid **anında** yeni bir çift setiyle değiştirilir (Sayı Avı'nın tam-yenileme ilkesiyle aynı, bkz. Bölüm 3) — oyun bitmez, koşu devam eder. Süre dolarsa veya can biterse oyun biter.
 
 **Kurallar:**
-- Gridteki 24 ifade birbirinden farklı olmalı (görsel çeşitlilik — Bölüm 5 ile aynı kural), ama **cevaplar** paylaşılabilir: hatta bazen 2'den fazla hücre aynı cevaba sahip olabilir (örn. iki farklı çiftin ikisi de `12` cevabını verirse), bu durumda oyuncu bu hücrelerden **herhangi ikisini** eşleştirebilir — bu, Bölüm 4'teki "birden fazla hücre aynı sonuçsa ikisi de geçerlidir" prensibinin eşleştirme moduna uyarlanmış hâlidir.
+- Gridteki ifadeler birbirinden farklı olmalı (görsel çeşitlilik — Bölüm 5 ile aynı kural), ama **cevaplar** paylaşılabilir: hatta bazen 2'den fazla hücre aynı cevaba sahip olabilir (örn. iki farklı çiftin ikisi de `12` cevabını verirse), bu durumda oyuncu bu hücrelerden **herhangi ikisini** eşleştirebilir — bu, Bölüm 4'teki "birden fazla hücre aynı sonuçsa ikisi de geçerlidir" prensibinin eşleştirme moduna uyarlanmış hâlidir.
 - Uzman seviyesinin iki adımlı ifadeleri (`(3+2)x4` gibi) eşleştirme modunda **üretilmez** — rastgele bir sonuca uyan ikinci bir iki-adımlı ifade türetmek gereksiz karmaşıklık katar; bu seviyede de tek adımlı işlemler kullanılır.
-- Can, süre, skor (kombo + hız bonusu) ve seviye/işlem türü seçimi Sayı Avı moduyla birebir aynı mekanikleri kullanır (bkz. Bölüm 6, 7).
+- Can sistemi (bkz. Bölüm 6), seviye/işlem türü seçim akışı ve "tek eriyen süre + doğru cevapta bonus + tam grid yenileme" ilkesi diğer modlarla aynıdır; farkı, kendi grid boyutunu (`matchGridShapeForLevel`, bkz. Bölüm 2) ve kendi başlangıç süre bütçesini (`DifficultyLevel.timeLimitSeconds`, seviyeye göre) korumasıdır (bkz. Bölüm 3, 7). Skor formülü (kombo + hız bonusu) diğer modlarla aynı hesaplamayı kullanır (bkz. Bölüm 6).
 - En iyi skorlar moda göre ayrı tutulur (Sayı Avı ve Eşleştirme'nin skor tabloları birbirinden bağımsızdır).
 
-**Uygulama:** `lib/logic/match_game_controller.dart` (`MatchGameController`), grid üretimi `lib/logic/problem_generator.dart` içindeki `generateMatchGrid`/`_forAnswer`, ekranlar `lib/screens/match_game_screen.dart` ve `lib/screens/match_result_screen.dart`. Ana menüdeki "Mod Seç" butonuyla açılan `ModeSelectScreen`'den (bkz. Bölüm 10) seçilir, aynı Seviye Seç / İşlem Türü Seç ekranlarını (`GameMode` parametresiyle) kullanır.
+**Uygulama:** `lib/logic/match_game_controller.dart` (`MatchGameController`), seviye→grid boyutu eşlemesi `lib/logic/grid_shape.dart` içindeki `matchGridShapeForLevel`, grid üretimi `lib/logic/problem_generator.dart` içindeki `generateMatchGrid`/`_forAnswer`, ekranlar `lib/screens/match_game_screen.dart` ve `lib/screens/match_result_screen.dart`. Ana menüdeki "Mod Seç" butonuyla açılan `ModeSelectScreen`'den (bkz. Bölüm 10) seçilir, aynı Seviye Seç / İşlem Türü Seç ekranlarını (`GameMode` parametresiyle) kullanır.
 
 ---
 
@@ -118,9 +115,9 @@ Eşikler bilerek geniş tutulur: ilkokulda matematiğe yeni başlayan bir çocuk
 
 ## 4. Hedef Sayı Seçim Mantığı
 
-- Her turda, gridte **hâlâ çözülmemiş** hücrelerin sonuçlarından rastgele biri hedef sayı olarak seçilir.
+- Sayı Avı ve Tırmanış'ta grid her turda tamamen yenilendiği için hedef sayı, taze üretilen gridin **tüm** hücrelerinden rastgele seçilir (hepsi zaten çözülmemiş/idle durumdadır).
 - **Önemli edge case:** Eğer birden fazla hücrenin sonucu aynıysa (örn. `3+4=7` ve `10-3=7`), hedef sayı `7` olduğunda oyuncu **ikisinden birine** dokunabilmeli, ikisi de doğru sayılmalı.
-- Hedef sayı her zaman gridte en az bir karşılığı olacak şekilde üretilmeli (asla çözümsüz hedef sayı çıkmamalı).
+- Hedef sayı her zaman gridte en az bir karşılığı olacak şekilde üretilmeli (asla çözümsüz hedef sayı çıkmamalı) — hedef, gridin kendi hücrelerinden seçildiği için bu otomatik sağlanır.
 
 ---
 
@@ -145,16 +142,18 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 ## 6. Skor, Can ve Bonus Sistemi
 
 - **Skor:** Her doğru cevap +10 puan (kalan süreye göre bonus çarpanı eklenebilir — hızlı doğru cevap daha çok puan).
-- **Can sistemi (uygulandı):** Oyuncuya **3 deneme hakkı** verilir (kalp ikonlarıyla gösterilir). Her yanlış cevapta bir hak düşer, 4. yanlış cevapta oyun biter ve Sonuç Ekranı'na geçilir ("Deneme Hakkın Bitti!"). Süre dolması hâlâ ayrı bir bitiş koşulu olarak kalır ("Süre Doldu!"). Uygulama: `lib/logic/game_controller.dart` içindeki `maxLives` (3) sabiti ve `livesRemaining` alanı; UI karşılığı `lib/screens/game_screen.dart` içindeki `_LivesBadge`.
+- **Can sistemi (uygulandı):** Oyuncuya **3 deneme hakkı** verilir (kalp ikonlarıyla gösterilir). Her yanlış cevapta bir hak düşer, 4. yanlış cevapta oyun biter ve Sonuç Ekranı'na geçilir ("Deneme Hakkın Bitti!"). Süre dolması hâlâ ayrı bir bitiş koşulu olarak kalır ("Süre Doldu!"). Uygulama: `lib/logic/game_constants.dart` içindeki `maxLives` (3) sabiti ve controller'lardaki `livesRemaining` alanı; UI karşılığı `lib/widgets/lives_badge.dart` içindeki `LivesBadge`.
 - **Combo/Streak bonusu:** Art arda doğru cevaplarda combo sayacı artar, ekstra puan/animasyon (yıldız, konfeti vb.) verilir.
-- **Süre bonusu:** Grid tamamen bitirilirse kalan süreye göre ekstra puan.
+- **Süre bonusu (üç modda da):** Ayrı bir bitiş bonusu yoktur; onun yerine her doğru cevapta/eşleştirmede doğrudan tek eriyen sayaca +3 saniye eklenir (bkz. Bölüm 7), bu da dolaylı olarak daha fazla doğru cevap = daha yüksek skor demektir.
 
 ---
 
 ## 7. Süre Mekaniği
 
-- Ekranın üst kısmında bir **countdown timer** (dairesel progress bar veya klasik sayaç) gösterilir.
-- Süre seviyeye göre ayarlanabilir (örn. Seviye 1: 90 sn, Seviye 4: 60 sn).
+- Ekranın üst kısmında bir **countdown timer** (dairesel progress bar) gösterilir.
+- Üç modda da süre **tek bir eriyen sayaçtır** — hiçbir modda "grid'i bitir, süre bonusu al" diye ayrı bir tamamlama ödülü yoktur, sayaç sürekli işler ve her doğru cevapta/eşleştirmede küçük bir bonusla beslenir; yanlış cevapta/eşleştirmede süre cezası yoktur (sadece can gider).
+- **Sayı Avı ve Tırmanış:** Sayaç 45 saniyeyle başlar (`initialTimeBudgetSeconds`), her doğru cevapta +3 saniye bonus eklenir (`timeBonusPerCorrectSeconds`).
+- **Eşleştirme modu:** Sayaç seviyeye göre değişen bir bütçeyle başlar (`DifficultyLevel.timeLimitSeconds`, örn. Kolay: 135 sn, Uzman: 90 sn — büyütülmüş 24 hücrelik grid için ölçeklenmiş rakamlar), her doğru eşleştirmede aynı şekilde +3 saniye eklenir (`MatchGameController.timeBonusPerCorrectSeconds`).
 - Son 10 saniyede sayaç kırmızıya dönüp yanıp sönmeli, hafif tik-tak sesi çalmalı (aciliyet hissi, ama korkutucu olmamalı).
 - Süre dolduğunda: grid donar, "Süre Doldu!" ekranı + skor özeti gösterilir.
 
@@ -186,11 +185,11 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 2. **Mod Seçim Ekranı (uygulandı):** "Seviye Seç" (Sayı Avı), "Eşleştirme Modu" ve "Tırmanış" kartlarının birleştiği tek giriş noktası — Sayı Avı / Eşleştirme kartları ortak Seviye Seçim Ekranı'na yönlenir; **Tırmanış kartı bu akışı atlar** ve doğrudan kendi oyun ekranına gider (grid boyutu/zorluk bölüm numarasına göre otomatik belirlendiği için ayrı bir seçim gerekmez — bkz. Bölüm 3b). Daha önce bu iki mod (Sayı Avı, Eşleştirme) ana menüde ayrı butonlardan (ve "Oyna" her zaman doğrudan Sayı Avı'na atlayarak) seçiliyordu; bu tutarsızlık giderildi. Uygulama: `lib/screens/mode_select_screen.dart` (`ModeSelectScreen`).
 3. **Seviye Seçim Ekranı:** Kolay / Orta / Zor / Uzman kartları. Sayı Avı ve Eşleştirme modu bu ekranı `GameMode` parametresiyle paylaşır (Tırmanış kullanmaz). Bir seviye seçildiğinde mod da "son oynanan" olarak kaydedilir (`ScoreService.setLastLevel` / `setLastMode`).
 4. **İşlem Türü Seç Ekranı:** Toplama/Çıkarma/Çarpma/Bölme seçimi; Sayı Avı ve Eşleştirme tarafından paylaşılır (Tırmanış kullanmaz). **"Kaydet"e basmak oyunu başlatmaz** — seçilen işlem türlerini kaydeder (`ScoreService.setLastOperations`) ve doğrudan Ana Menü'ye döner ("Hazır! Başlamak için 'Oyna'ya dokun" bildirimiyle). Mod Seç akışının (mod → seviye → işlem türü) tek görevi, "Oyna" butonunun kullanacağı kombinasyonu hazırlamaktır; asıl oyun her zaman Ana Menü'deki "Oyna" butonuyla başlar — bu, en son kaydedilen mod + seviye + işlem türü kombinasyonunu okuyup (`MainMenuScreen._quickPlay`) hiçbir ara ekran göstermeden ilgili oyun ekranına gider (Tırmanış son oynanan modsa level/operations hiç okunmadan doğrudan `ClimbGameScreen`'e gider).
-5. **Oyun Ekranı (Sayı Avı):** 4x6 grid + üstte hedef sayı + süre sayacı + skor.
-6. **Oyun Ekranı (Eşleştirme):** 4x6 grid + üstte kalan çift sayısı + süre sayacı + skor (bkz. Bölüm 3a).
+5. **Oyun Ekranı (Sayı Avı):** Seçilen seviyeye göre sabit boyutlu grid (Kolay 1x2, Orta 2x2, Zor 3x3, Uzman 4x4) + üstte hedef sayı + tek eriyen süre sayacı (45 sn, doğru cevapta +3 sn bonus) + skor.
+6. **Oyun Ekranı (Eşleştirme):** Seçilen seviyeye göre sabit boyutlu grid (2x2/2x4/3x4/4x6) + üstte kalan çift sayısı + süre sayacı + skor (bkz. Bölüm 3a).
 7. **Oyun Ekranı (Tırmanış):** Bölüme göre büyüyen grid (1x2→2x2→3x3→4x4) + üstte hedef sayı + bölüm rozeti ("Bölüm: 7") + tek eriyen süre sayacı + skor (bkz. Bölüm 3b).
 8. **Sonuç Ekranı:** Toplam skor, doğru/yanlış (veya eşleşen çift/yanlış deneme, veya ulaşılan bölüm/doğru) sayısı, en iyi skor (Tırmanış'ta ayrıca en iyi bölüm), "Tekrar Oyna" / "Ana Menü" butonları. Her modun kendi sonuç ekranı vardır.
-9. **Skor Tablosu:** Sayı Avı ve Eşleştirme için seviye başına en iyi skorları ayrı ayrı gösterir; Tırmanış için (seçilebilir bir seviye olmadığından) tek bir özet kart — "En iyi bölüm" ve "En iyi skor" — gösterir.
+9. **Skor Tablosu:** Sayı Avı ve Eşleştirme için seviye başına en iyi skorları (açıkça "En yüksek skor" etiketiyle, bir kupa/rozet sayacı değil) ayrı ayrı gösterir; Tırmanış için (seçilebilir bir seviye olmadığından) tek bir özet kart — "En iyi bölüm" ve "En iyi skor" — gösterir.
 10. **Ayarlar:** Ses aç/kapa, zorluk varsayılanı, dil seçimi (opsiyonel çoklu dil desteği).
 
 ---
@@ -219,11 +218,12 @@ lib/
     game_mode.dart          // GameMode: hunt (Sayı Avı) / match (Eşleştirme) / climb (Tırmanış)
   logic/
     problem_generator.dart      // rastgele işlem üretimi + eşleştirme çift üretimi
-    game_controller.dart        // Sayı Avı state yönetimi (skor, süre, grid durumu)
+    game_controller.dart        // Sayı Avı state yönetimi (skor, tek eriyen süre, tam-yenilenen grid)
     match_game_controller.dart  // Eşleştirme modu state yönetimi (bkz. Bölüm 3a)
     climb_game_controller.dart  // Tırmanış modu state yönetimi (bkz. Bölüm 3b)
-    climb_progression.dart      // bölüm -> (grid boyutu, zorluk) eşlemesi (bkz. Bölüm 3b)
-    game_constants.dart         // GameStatus, gridSize, maxLives — üç mod da paylaşır
+    climb_progression.dart      // bölüm -> (zorluk, işlem havuzu) eşlemesi (bkz. Bölüm 3b)
+    grid_shape.dart              // seviye -> grid boyutu eşlemesi: gridShapeForLevel (Sayı Avı + Tırmanış, climb_progression.dart üzerinden) ve matchGridShapeForLevel (Eşleştirme)
+    game_constants.dart         // GameStatus, maxLives — üç mod da paylaşır
     grid_playable.dart          // GridWidget'ın ihtiyaç duyduğu ortak arayüz (columns dahil)
   screens/
     main_menu_screen.dart
@@ -277,22 +277,23 @@ class GridCell {
 
 ## 14. Kabul Kriterleri (Acceptance Criteria) — MVP
 
-- [ ] 4x6 grid ekranda düzgün render ediliyor, tüm hücreler dokunulabilir.
-- [ ] Her hücrede geçerli, çözülebilir bir matematik işlemi var.
-- [ ] Hedef sayı her zaman gridteki en az bir hücrenin cevabına eşit.
-- [ ] Doğru dokunuşta hücre animasyonla yok oluyor, skor artıyor, yeni hedef sayı geliyor.
-- [ ] Yanlış dokunuşta hücre kırmızıya dönüyor, "Yanlış!" gösteriliyor, sonra normale dönüyor.
-- [ ] Süre sayacı çalışıyor, süre bitince oyun sonlanıyor.
+- [x] Sayı Avı'nda seçilen seviyeye göre sabit boyutlu grid (1x2/2x2/3x3/4x4) düzgün render ediliyor, tüm hücreler dokunulabilir (Eşleştirme modunda seviyeye göre 2x2/2x4/3x4/4x6).
+- [x] Her hücrede geçerli, çözülebilir bir matematik işlemi var.
+- [x] Hedef sayı her zaman gridteki en az bir hücrenin cevabına eşit.
+- [x] Sayı Avı'nda doğru dokunuşta skor artıyor, tek eriyen süre sayacına +3 sn bonus ekleniyor, tüm grid + hedef sayı anında yenileniyor.
+- [x] Yanlış dokunuşta hücre kırmızıya dönüyor, "Yanlış!" gösteriliyor, sonra normale dönüyor; süre etkilenmiyor, sadece can azalıyor.
+- [x] Süre sayacı çalışıyor, süre bitince oyun sonlanıyor (Sayı Avı/Tırmanış: 45 sn'lik tek eriyen sayaç; Eşleştirme: seviyeye göre başlayan tek eriyen sayaç).
 - [x] Oyuncuya 3 deneme (can) hakkı veriliyor, 4. yanlış cevapta oyun sonlanıyor.
-- [ ] Grid tamamen boşalırsa (Seçenek B) seviye tamamlanıyor.
+- [x] Hiçbir modda "grid tamamen bitince seviye tamamlandı" diye bir kazanma durumu yok; üçünde de bitiş her zaman süre veya canların tükenmesi. Eşleştirme'de grid tamamen boşalırsa (Seçenek B'nin özü) oyun bitmiyor, grid anında yeni bir çift setiyle değiştiriliyor (Sayı Avı'nın tam-yenileme ilkesiyle aynı).
 - [ ] Sonuç ekranında skor ve tekrar oyna seçeneği var.
 - [ ] En az 3 zorluk seviyesi mevcut.
 - [ ] Ses efektleri çalışıyor ve kapatılabiliyor.
-- [x] Eşleştirme modu: 4x6 grid, sonucu eşit iki hücre eşleştirilince ikisi de yok oluyor; yanlış eşleştirmede ikisi de kırmızıya dönüp normale dönüyor.
-- [x] Eşleştirme modunda da seviye ve işlem türü seçilebiliyor, can/süre mekaniği Sayı Avı ile aynı.
+- [x] Eşleştirme modu: seviyeye göre sabit boyutlu grid, sonucu eşit iki hücre eşleştirilince ikisi de yok oluyor; yanlış eşleştirmede ikisi de kırmızıya dönüp normale dönüyor.
+- [x] Eşleştirme modunda da seviye ve işlem türü seçilebiliyor; can mekaniği, skor formülü ve "tek eriyen süre + doğru eşleştirmede bonus + tam grid yenileme" ilkesi diğer modlarla aynı, sadece kendi grid boyutu ve kendi başlangıç süresi (ikisi de seviyeye göre) korunuyor (bkz. Bölüm 3a).
 - [x] Tırmanış modu: grid boyutu bölüm numarasına göre büyüyor (1x2→2x2→3x3→4x4, orada sabitleniyor), işlem zorluğu aynı eşiklerde otomatik artıyor.
 - [x] Tırmanış modunda tek bir eriyen süre sayacı var, doğru cevapta küçük bir bonusla besleniyor; yanlış cevap sadece can azaltıyor, bölümü/gridi sıfırlamıyor.
 - [x] Tırmanış modunda en iyi ulaşılan bölüm ve en iyi skor ayrı ayrı kaydediliyor ve Skor Tablosu'nda gösteriliyor.
+- [x] Skor Tablosu, Sayı Avı ve Eşleştirme'de seviye başına toplam bir kupa/rozet sayacı değil, açıkça etiketlenmiş "En yüksek skor" değerini listeliyor.
 
 ---
 

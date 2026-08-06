@@ -42,7 +42,6 @@ class AudioService {
   Future<void> playWrong() => _playSfx('wrong.wav');
   Future<void> playTick() => _playSfx('tick.wav');
   Future<void> playTimeUp() => _playSfx('time_up.wav');
-  Future<void> playLevelComplete() => _playSfx('level_complete.wav');
 
   Future<void> playBackgroundMusic() async {
     if (!musicEnabled) return;

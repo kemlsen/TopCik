@@ -12,9 +12,9 @@ import '../widgets/match_status_widget.dart';
 import '../widgets/timer_widget.dart';
 import 'match_result_screen.dart';
 
-/// Eşleştirme modu oyun ekranı: 4x6 grid + üstte kalan çift sayısı + süre
-/// sayacı + skor. Hedef sayı yerine, oyuncu sonucu aynı olan iki hücreyi
-/// eşleştirir (bkz. CLAUDE.md Bölüm 3a).
+/// Eşleştirme modu oyun ekranı: seviyeye göre sabit boyutlu grid + üstte
+/// kalan çift sayısı + süre sayacı + skor. Hedef sayı yerine, oyuncu
+/// sonucu aynı olan iki hücreyi eşleştirir (bkz. CLAUDE.md Bölüm 3a).
 class MatchGameScreen extends StatefulWidget {
   final DifficultyLevel level;
   final Set<Operation> operations;
@@ -99,8 +99,8 @@ class _MatchGameScreenState extends State<MatchGameScreen> {
                         Expanded(
                           child: Center(
                             child: MatchStatusWidget(
-                              matchedPairs: _controller.matchedPairs,
-                              totalPairs: MatchGameController.totalPairs,
+                              matchedPairs: _controller.clearedPairsInGrid,
+                              totalPairs: _controller.totalPairs,
                             ),
                           ),
                         ),

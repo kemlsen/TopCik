@@ -1,17 +1,15 @@
 import '../models/difficulty_level.dart';
+import 'grid_shape.dart';
 
-/// Round -> grid shape (columns + total cell count). İlk katman kare değil
-/// (1x2 — tek hücrede gerçek bir seçim olmayacağı için en az iki hücre
-/// olsun diye), sonraki katmanlar kare: 2x2 -> 3x3 -> 4x4, orada sabit
-/// kalır. Eşikler bilerek geniş tutulur: ilkokulda matematiğe yeni başlayan
+/// Round -> grid shape (columns + total cell count), orada sabit kalır.
+/// Eşikler bilerek geniş tutulur: ilkokulda matematiğe yeni başlayan
 /// çocuklar ilk katmanlarda uzun süre zorlanmadan ilerleyip daha ileri
-/// bölümlere ulaşabilsin (bkz. CLAUDE.md Bölüm 3b).
-({int columns, int cellCount}) climbGridShapeForRound(int round) {
-  if (round <= 20) return (columns: 2, cellCount: 2); // 1x2
-  if (round <= 50) return (columns: 2, cellCount: 4); // 2x2
-  if (round <= 100) return (columns: 3, cellCount: 9); // 3x3
-  return (columns: 4, cellCount: 16); // 4x4
-}
+/// bölümlere ulaşabilsin (bkz. CLAUDE.md Bölüm 3b). Katman -> şekil
+/// eşlemesinin kendisi [gridShapeForLevel]'de yaşar, Sayı Avı'nın seçilen
+/// seviyeye göre sabit grid boyutuyla aynı kaynaktan gelsin diye (bkz.
+/// Bölüm 2).
+({int columns, int cellCount}) climbGridShapeForRound(int round) =>
+    gridShapeForLevel(climbLevelForRound(round));
 
 /// Round -> sayı aralığı zorluğu (mevcut [DifficultyLevel.maxNumber]),
 /// [climbGridShapeForRound] ile aynı geniş eşiklerde ilerler.

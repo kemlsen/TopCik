@@ -43,7 +43,7 @@ class _OperationSelectScreenState extends State<OperationSelectScreen> {
   @override
   void initState() {
     super.initState();
-    _selected = widget.level.operations.toSet();
+    _selected = Operation.values.toSet();
   }
 
   bool get _allSelected => _selected.length == Operation.values.length;

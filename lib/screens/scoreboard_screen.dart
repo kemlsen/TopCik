@@ -85,19 +85,37 @@ class ScoreboardScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              Icon(
-                                Icons.emoji_events_rounded,
-                                size: 20,
-                                color: AppColors.gold,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '$best',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.gold,
-                                ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text(
+                                    'En yüksek skor',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.emoji_events_rounded,
+                                        size: 18,
+                                        color: AppColors.gold,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '$best',
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.gold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ],
                           ),

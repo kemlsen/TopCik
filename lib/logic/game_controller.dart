@@ -7,6 +7,7 @@ import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import 'game_constants.dart';
 import 'grid_playable.dart';
+import 'grid_shape.dart';
 import 'problem_generator.dart';
 
 export 'game_constants.dart';
@@ -19,7 +20,6 @@ class GameResult {
   final int correctCount;
   final int wrongCount;
   final bool isNewBest;
-  final bool levelCompleted;
   final bool outOfLives;
 
   const GameResult({
@@ -29,16 +29,21 @@ class GameResult {
     required this.correctCount,
     required this.wrongCount,
     required this.isNewBest,
-    required this.levelCompleted,
     this.outOfLives = false,
   });
 }
 
-/// Owns all live game state for the grid screen: the problem grid,
-/// the current target number, score, combo streak and the countdown timer.
+/// Owns all live game state for the grid screen: the problem grid, the
+/// current target number, score, combo streak and the countdown timer.
 ///
-/// Uses "Seçenek B — Azalan Grid" (Bölüm 3): cells empty out as they are
-/// solved and the level ends once all [gridSize] cells are cleared.
+/// Tırmanış moduyla aynı sürekli-koşu mekaniğini kullanır (bkz. CLAUDE.md
+/// Bölüm 2): grid boyutu seçilen [level]'e göre sabittir (bkz.
+/// [gridShapeForLevel]), doğru cevap bulununca tüm grid anında yenilenir
+/// (tek hücre boşaltıp aynı gridde devam etmez), ve tek bir eriyen süre
+/// sayacı (45 sn) her doğru cevapta küçük bir bonusla beslenir. Tırmanış'tan
+/// farkı, bölüm bölüm otomatik ilerleme yerine seviye/işlem türünün
+/// oyuncu tarafından seçilebilir kalması — "45 saniyede kaç tane
+/// yapabilirsin" modu.
 class GameController extends GridPlayable {
   GameController({
     required this.level,
@@ -63,10 +68,13 @@ class GameController extends GridPlayable {
   final ProblemGenerator _generator;
   final Random _random;
 
+  static const int initialTimeBudgetSeconds = 45;
+  static const int timeBonusPerCorrectSeconds = 3;
+
   @override
   late List<GridCell> cells;
   @override
-  int get columns => gridColumns;
+  int get columns => gridShapeForLevel(level).columns;
   late int targetNumber;
   int score = 0;
   int correctCount = 0;
@@ -84,14 +92,10 @@ class GameController extends GridPlayable {
   DateTime _targetSetAt = DateTime.now();
   bool _disposed = false;
 
-  /// Called once the run ends (grid cleared or time ran out).
+  /// Called once the run ends (time ran out or lives ran out).
   void Function(GameResult result)? onGameEnd;
 
   void start() {
-    cells = _generator
-        .generateGrid(level, operations: operations, count: gridSize)
-        .map((problem) => GridCell(problem: problem))
-        .toList();
     score = 0;
     correctCount = 0;
     wrongCount = 0;
@@ -99,13 +103,25 @@ class GameController extends GridPlayable {
     livesRemaining = maxLives;
     wrongIndex = null;
     status = GameStatus.playing;
-    timeRemainingSeconds = level.timeLimitSeconds;
-    targetNumber = _pickTarget();
-    _targetSetAt = DateTime.now();
+    timeRemainingSeconds = initialTimeBudgetSeconds;
+    _generateGrid();
 
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     notifyListeners();
+  }
+
+  /// Generates a fresh grid/target without touching score/lives/time — her
+  /// doğru cevapta tüm grid yenilenir (tek hücre boşaltılmaz), bu yüzden
+  /// yeni grid'in tüm hücreleri zaten idle olur.
+  void _generateGrid() {
+    final shape = gridShapeForLevel(level);
+    cells = _generator
+        .generateGrid(level, operations: operations, count: shape.cellCount)
+        .map((problem) => GridCell(problem: problem))
+        .toList();
+    targetNumber = cells[_random.nextInt(cells.length)].problem.answer;
+    _targetSetAt = DateTime.now();
   }
 
   void _tick() {
@@ -116,7 +132,7 @@ class GameController extends GridPlayable {
     }
     if (timeRemainingSeconds <= 0) {
       timeRemainingSeconds = 0;
-      _endGame(levelCompleted: false);
+      _endGame();
       return;
     }
     notifyListeners();
@@ -140,18 +156,13 @@ class GameController extends GridPlayable {
     comboStreak++;
     correctCount++;
     score += _scoreForAnswer();
+    timeRemainingSeconds += timeBonusPerCorrectSeconds;
     _audio.playCorrect();
     notifyListeners();
 
     Future.delayed(correctAnimationDuration, () {
       if (_disposed) return;
-      cells[index].state = CellState.empty;
-      if (cells.every((c) => c.state == CellState.empty)) {
-        _endGame(levelCompleted: true);
-        return;
-      }
-      targetNumber = _pickTarget();
-      _targetSetAt = DateTime.now();
+      _generateGrid();
       notifyListeners();
     });
   }
@@ -170,7 +181,7 @@ class GameController extends GridPlayable {
       cells[index].state = CellState.idle;
       if (wrongIndex == index) wrongIndex = null;
       if (livesRemaining <= 0) {
-        _endGame(levelCompleted: false, outOfLives: true);
+        _endGame(outOfLives: true);
         return;
       }
       notifyListeners();
@@ -192,31 +203,10 @@ class GameController extends GridPlayable {
     return base + speedBonus + comboBonus;
   }
 
-  /// Picks a target number from among the still-unsolved cells. Bölüm 4:
-  /// several cells may share the same answer — any of them is valid.
-  int _pickTarget() {
-    final candidates = cells
-        .where((c) => c.state == CellState.idle)
-        .map((c) => c.problem.answer)
-        .toList();
-    return candidates[_random.nextInt(candidates.length)];
-  }
-
-  Future<void> _endGame({
-    required bool levelCompleted,
-    bool outOfLives = false,
-  }) async {
+  Future<void> _endGame({bool outOfLives = false}) async {
     _timer?.cancel();
-    status = levelCompleted
-        ? GameStatus.levelComplete
-        : (outOfLives ? GameStatus.outOfLives : GameStatus.timeUp);
-    if (levelCompleted) {
-      // Bölüm 6 — süre bonusu: kalan süreye göre ekstra puan.
-      score += timeRemainingSeconds * 2;
-      _audio.playLevelComplete();
-    } else {
-      _audio.playTimeUp();
-    }
+    status = outOfLives ? GameStatus.outOfLives : GameStatus.timeUp;
+    _audio.playTimeUp();
     notifyListeners();
 
     final isNewBest = await _scoreService.submitScore(level, score);
@@ -228,7 +218,6 @@ class GameController extends GridPlayable {
         correctCount: correctCount,
         wrongCount: wrongCount,
         isNewBest: isNewBest,
-        levelCompleted: levelCompleted,
         outOfLives: outOfLives,
       ),
     );

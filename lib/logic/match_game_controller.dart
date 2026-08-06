@@ -8,6 +8,7 @@ import '../services/audio_service.dart';
 import '../services/score_service.dart';
 import 'game_constants.dart';
 import 'grid_playable.dart';
+import 'grid_shape.dart';
 import 'problem_generator.dart';
 
 /// Summary handed to the match-mode result screen once a run ends.
@@ -16,10 +17,8 @@ class MatchGameResult {
   final Set<Operation> operations;
   final int score;
   final int matchedPairs;
-  final int totalPairs;
   final int wrongAttempts;
   final bool isNewBest;
-  final bool levelCompleted;
   final bool outOfLives;
 
   const MatchGameResult({
@@ -27,10 +26,8 @@ class MatchGameResult {
     required this.operations,
     required this.score,
     required this.matchedPairs,
-    required this.totalPairs,
     required this.wrongAttempts,
     required this.isNewBest,
-    required this.levelCompleted,
     this.outOfLives = false,
   });
 }
@@ -38,8 +35,12 @@ class MatchGameResult {
 /// Owns all live game state for Eşleştirme modu: a grid where every
 /// cell's math problem shares its answer with exactly one other cell.
 /// Players tap two cells; a matching pair fades away, a mismatch flashes
-/// red and resets. Uses the same can (lives) and süre (timer) mechanics as
-/// Sayı Avı modu (bkz. CLAUDE.md Bölüm 6, 7).
+/// red and resets. Grid size is fixed per selected [level] (bkz.
+/// [matchGridShapeForLevel], CLAUDE.md Bölüm 3a). Sayı Avı'yla aynı
+/// "tek eriyen süre + tam grid yenileme" ilkesini kullanır: tüm çiftler
+/// eşleşince grid anında yeni bir çift setiyle değiştirilir (oyun bitmez),
+/// her doğru eşleştirmede süreye küçük bir bonus eklenir; bitiş her zaman
+/// süre veya canların tükenmesidir.
 class MatchGameController extends GridPlayable {
   MatchGameController({
     required this.level,
@@ -59,13 +60,26 @@ class MatchGameController extends GridPlayable {
   final ScoreService _scoreService;
   final ProblemGenerator _generator;
 
-  static const int totalPairs = gridSize ~/ 2;
+  static const int timeBonusPerCorrectSeconds = 3;
+
+  int get totalPairs => matchGridShapeForLevel(level).pairCount;
+
+  /// Number of pairs already cleared in the *current* grid — used for the
+  /// live "kalan çift" status widget. Derived from cell state rather than
+  /// tracked separately since it resets naturally whenever [cells] is
+  /// replaced by [_generateGrid].
+  int get clearedPairsInGrid =>
+      cells.where((c) => c.state == CellState.empty).length ~/ 2;
 
   @override
   late List<GridCell> cells;
   @override
-  int get columns => gridColumns;
+  int get columns => matchGridShapeForLevel(level).columns;
   int score = 0;
+
+  /// Lifetime count of successful matches across the whole run (grid
+  /// regenerations included) — shown as a plain count on the result
+  /// screen, mirroring Sayı Avı's `correctCount` (bkz. Bölüm 2).
   int matchedPairs = 0;
   int wrongAttempts = 0;
   int comboStreak = 0;
@@ -88,10 +102,6 @@ class MatchGameController extends GridPlayable {
   void Function(MatchGameResult result)? onGameEnd;
 
   void start() {
-    cells = _generator
-        .generateMatchGrid(level, operations: operations, pairCount: totalPairs)
-        .map((problem) => GridCell(problem: problem))
-        .toList();
     score = 0;
     matchedPairs = 0;
     wrongAttempts = 0;
@@ -101,10 +111,21 @@ class MatchGameController extends GridPlayable {
     wrongPair = null;
     status = GameStatus.playing;
     timeRemainingSeconds = level.timeLimitSeconds;
+    _generateGrid();
 
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     notifyListeners();
+  }
+
+  /// Generates a fresh set of pairs without touching score/lives/time —
+  /// tüm çiftler eşleştiğinde de bu kullanılır (bkz. [_handleMatch]), grid
+  /// hiçbir zaman kalıcı olarak boş kalmaz.
+  void _generateGrid() {
+    cells = _generator
+        .generateMatchGrid(level, operations: operations, pairCount: totalPairs)
+        .map((problem) => GridCell(problem: problem))
+        .toList();
   }
 
   void _tick() {
@@ -115,7 +136,7 @@ class MatchGameController extends GridPlayable {
     }
     if (timeRemainingSeconds <= 0) {
       timeRemainingSeconds = 0;
-      _endGame(levelCompleted: false);
+      _endGame();
       return;
     }
     notifyListeners();
@@ -161,6 +182,7 @@ class MatchGameController extends GridPlayable {
     matchedPairs++;
     comboStreak++;
     score += _scoreForMatch();
+    timeRemainingSeconds += timeBonusPerCorrectSeconds;
     _audio.playCorrect();
     notifyListeners();
 
@@ -170,8 +192,7 @@ class MatchGameController extends GridPlayable {
       cells[b].state = CellState.empty;
       _busy = false;
       if (cells.every((c) => c.state == CellState.empty)) {
-        _endGame(levelCompleted: true);
-        return;
+        _generateGrid();
       }
       notifyListeners();
     });
@@ -196,7 +217,7 @@ class MatchGameController extends GridPlayable {
       wrongPair = null;
       _busy = false;
       if (livesRemaining <= 0) {
-        _endGame(levelCompleted: false, outOfLives: true);
+        _endGame(outOfLives: true);
         return;
       }
       notifyListeners();
@@ -218,20 +239,10 @@ class MatchGameController extends GridPlayable {
     return base + speedBonus + comboBonus;
   }
 
-  Future<void> _endGame({
-    required bool levelCompleted,
-    bool outOfLives = false,
-  }) async {
+  Future<void> _endGame({bool outOfLives = false}) async {
     _timer?.cancel();
-    status = levelCompleted
-        ? GameStatus.levelComplete
-        : (outOfLives ? GameStatus.outOfLives : GameStatus.timeUp);
-    if (levelCompleted) {
-      score += timeRemainingSeconds * 2;
-      _audio.playLevelComplete();
-    } else {
-      _audio.playTimeUp();
-    }
+    status = outOfLives ? GameStatus.outOfLives : GameStatus.timeUp;
+    _audio.playTimeUp();
     notifyListeners();
 
     final isNewBest = await _scoreService.submitScore(
@@ -245,10 +256,8 @@ class MatchGameController extends GridPlayable {
         operations: operations,
         score: score,
         matchedPairs: matchedPairs,
-        totalPairs: totalPairs,
         wrongAttempts: wrongAttempts,
         isNewBest: isNewBest,
-        levelCompleted: levelCompleted,
         outOfLives: outOfLives,
       ),
     );

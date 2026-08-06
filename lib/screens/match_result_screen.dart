@@ -22,9 +22,7 @@ class MatchResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = result.levelCompleted
-        ? 'Tebrikler! 🎉'
-        : (result.outOfLives ? 'Deneme Hakkın Bitti!' : 'Süre Doldu!');
+    final title = result.outOfLives ? 'Deneme Hakkın Bitti!' : 'Süre Doldu!';
 
     return Scaffold(
       body: Container(
@@ -85,8 +83,7 @@ class MatchResultScreen extends StatelessWidget {
                                   children: [
                                     _StatColumn(
                                       label: 'Eşleşen Çift',
-                                      value:
-                                          '${result.matchedPairs}/${result.totalPairs}',
+                                      value: '${result.matchedPairs}',
                                       color: AppColors.success,
                                     ),
                                     _StatColumn(
