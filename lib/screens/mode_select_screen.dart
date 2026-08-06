@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/game_mode.dart';
 import '../services/audio_service.dart';
+import '../services/daily_goals_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/gradient_scaffold.dart';
@@ -29,11 +30,13 @@ const _modeIcons = {
 class ModeSelectScreen extends StatelessWidget {
   final AudioService audioService;
   final ScoreService scoreService;
+  final DailyGoalsService dailyGoalsService;
 
   const ModeSelectScreen({
     super.key,
     required this.audioService,
     required this.scoreService,
+    required this.dailyGoalsService,
   });
 
   /// Tırmanış modu Seviye Seç / İşlem Türü Seç akışını atlar ve doğrudan
@@ -49,6 +52,7 @@ class ModeSelectScreen extends StatelessWidget {
           builder: (_) => ClimbGameScreen(
             audioService: audioService,
             scoreService: scoreService,
+            dailyGoalsService: dailyGoalsService,
           ),
         ),
       );

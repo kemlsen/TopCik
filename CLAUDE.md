@@ -181,7 +181,7 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 
 ## 10. Ekranlar (Screens)
 
-1. **Ana Menü:** Oyna, Mod Seç, Skor Tablosu, Ayarlar. Oyun **yalnızca** "Oyna" butonuna basıldığında başlar; Mod Seç akışının kendisi oyunu başlatmaz (bkz. madde 2-4).
+1. **Ana Menü:** Oyna, Mod Seç, Skor Tablosu, Ayarlar + üstte bir **seri/rütbe rozeti** ("🔥 5 gün — Çarpım Kahramanı", bkz. Bölüm 17), dokununca Günlük Hedefler Ekranı'nı açar. Oyun **yalnızca** "Oyna" butonuna basıldığında başlar; Mod Seç akışının kendisi oyunu başlatmaz (bkz. madde 2-4).
 2. **Mod Seçim Ekranı (uygulandı):** "Seviye Seç" (Sayı Avı), "Eşleştirme Modu" ve "Tırmanış" kartlarının birleştiği tek giriş noktası — Sayı Avı / Eşleştirme kartları ortak Seviye Seçim Ekranı'na yönlenir; **Tırmanış kartı bu akışı atlar** ve doğrudan kendi oyun ekranına gider (grid boyutu/zorluk bölüm numarasına göre otomatik belirlendiği için ayrı bir seçim gerekmez — bkz. Bölüm 3b). Daha önce bu iki mod (Sayı Avı, Eşleştirme) ana menüde ayrı butonlardan (ve "Oyna" her zaman doğrudan Sayı Avı'na atlayarak) seçiliyordu; bu tutarsızlık giderildi. Uygulama: `lib/screens/mode_select_screen.dart` (`ModeSelectScreen`).
 3. **Seviye Seçim Ekranı:** Kolay / Orta / Zor / Uzman kartları. Sayı Avı ve Eşleştirme modu bu ekranı `GameMode` parametresiyle paylaşır (Tırmanış kullanmaz). Bir seviye seçildiğinde mod da "son oynanan" olarak kaydedilir (`ScoreService.setLastLevel` / `setLastMode`).
 4. **İşlem Türü Seç Ekranı:** Toplama/Çıkarma/Çarpma/Bölme seçimi; Sayı Avı ve Eşleştirme tarafından paylaşılır (Tırmanış kullanmaz). **"Kaydet"e basmak oyunu başlatmaz** — seçilen işlem türlerini kaydeder (`ScoreService.setLastOperations`) ve doğrudan Ana Menü'ye döner ("Hazır! Başlamak için 'Oyna'ya dokun" bildirimiyle). Mod Seç akışının (mod → seviye → işlem türü) tek görevi, "Oyna" butonunun kullanacağı kombinasyonu hazırlamaktır; asıl oyun her zaman Ana Menü'deki "Oyna" butonuyla başlar — bu, en son kaydedilen mod + seviye + işlem türü kombinasyonunu okuyup (`MainMenuScreen._quickPlay`) hiçbir ara ekran göstermeden ilgili oyun ekranına gider (Tırmanış son oynanan modsa level/operations hiç okunmadan doğrudan `ClimbGameScreen`'e gider).
@@ -191,6 +191,7 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 8. **Sonuç Ekranı:** Toplam skor, doğru/yanlış (veya eşleşen çift/yanlış deneme, veya ulaşılan bölüm/doğru) sayısı, en iyi skor (Tırmanış'ta ayrıca en iyi bölüm), "Tekrar Oyna" / "Ana Menü" butonları. Her modun kendi sonuç ekranı vardır.
 9. **Skor Tablosu:** Sayı Avı ve Eşleştirme için seviye başına en iyi skorları (açıkça "En yüksek skor" etiketiyle, bir kupa/rozet sayacı değil) ayrı ayrı gösterir; Tırmanış için (seçilebilir bir seviye olmadığından) tek bir özet kart — "En iyi bölüm" ve "En iyi skor" — gösterir.
 10. **Ayarlar:** Ses aç/kapa, zorluk varsayılanı, dil seçimi (opsiyonel çoklu dil desteği).
+11. **Günlük Hedefler Ekranı (uygulandı):** Bugünün 3 hedefi (ilerleme çubuklarıyla), seri (streak) kartı ve mevcut rütbe + bir sonraki rütbeye kalan gün sayısı (bkz. Bölüm 17). Ana Menü'deki seri rozetinden açılır. Uygulama: `lib/screens/daily_goals_screen.dart` (`DailyGoalsScreen`).
 
 ---
 
@@ -216,6 +217,7 @@ lib/
     grid_cell.dart          // hücre durumu (idle, selected, correct, wrong, empty)
     difficulty_level.dart   // seviye + işlem türü tanımları
     game_mode.dart          // GameMode: hunt (Sayı Avı) / match (Eşleştirme) / climb (Tırmanış)
+    daily_goal.dart          // DailyGoalKind (hedef havuzu) + DailyRank (rütbeler) — bkz. Bölüm 17
   logic/
     problem_generator.dart      // rastgele işlem üretimi + eşleştirme çift üretimi
     game_controller.dart        // Sayı Avı state yönetimi (skor, tek eriyen süre, tam-yenilenen grid)
@@ -238,6 +240,7 @@ lib/
     climb_result_screen.dart     // Tırmanış modu sonuç ekranı
     scoreboard_screen.dart
     settings_screen.dart
+    daily_goals_screen.dart      // Günlük Hedefler ekranı (bkz. Bölüm 17)
   widgets/
     grid_widget.dart
     grid_cell_widget.dart
@@ -249,6 +252,7 @@ lib/
   services/
     audio_service.dart
     score_service.dart      // yerel skor kaydı (shared_preferences), moda göre ayrı anahtar
+    daily_goals_service.dart // günlük hedef ilerlemesi + seri + rütbe (shared_preferences) — bkz. Bölüm 17
     app_messenger.dart      // ekranlar arası SnackBar için paylaşılan ScaffoldMessengerKey
 assets/
   sounds/
@@ -294,13 +298,14 @@ class GridCell {
 - [x] Tırmanış modunda tek bir eriyen süre sayacı var, doğru cevapta küçük bir bonusla besleniyor; yanlış cevap sadece can azaltıyor, bölümü/gridi sıfırlamıyor.
 - [x] Tırmanış modunda en iyi ulaşılan bölüm ve en iyi skor ayrı ayrı kaydediliyor ve Skor Tablosu'nda gösteriliyor.
 - [x] Skor Tablosu, Sayı Avı ve Eşleştirme'de seviye başına toplam bir kupa/rozet sayacı değil, açıkça etiketlenmiş "En yüksek skor" değerini listeliyor.
+- [x] Günlük Hedefler: her gün 3 hedef çıkıyor, ilerlemesi oyun sonuçlarından otomatik besleniyor, hepsi tamamlanınca seri bir artıyor; bir gün atlanırsa (veya hedefler tamamlanmazsa) seri sıfırlanıyor; seri uzunluğuna göre matematik temalı bir rütbe gösteriliyor (bkz. Bölüm 17).
 
 ---
 
 ## 15. Gelecek Geliştirmeler (Nice-to-have)
 
 - Çoklu oyuncu / arkadaşla yarışma modu.
-- Günlük görevler ve ödül sistemi (yıldız, rozet).
+- Günlük hedeflerin gerçek bir bildirim/hatırlatma sistemiyle desteklenmesi (bkz. Bölüm 17 — şu an sadece uygulama içi, pasif bir seri takibi var, "bugün henüz oynamadın" gibi push bildirimleri yok).
 - Ebeveyn paneli: çocuğun ilerlemesini, hangi işlem tipinde zorlandığını gösteren istatistikler.
 - Özelleştirilebilir maskot/karakter kıyafetleri (kazanılan puanlarla açılan).
 - Farklı grid boyutları (3x3 kolay mod, 5x5 zor mod).
@@ -314,5 +319,44 @@ class GridCell {
 - Metinler basit, büyük punto, yüksek kontrast — okuma güçlüğü olan çocuklar için de erişilebilir olmalı.
 - Reklam/IAP eklenecekse ebeveyn onay ekranı (yaş doğrulama / matematik sorusu gibi basit bir kapı) kullanılmalı — bu tür oyunlarda COPPA/KVKK gibi çocuk gizliliği kurallarına dikkat edilmeli.
 - Performans: 4x6 grid çok ağır değil, ama animasyonlar düşük FPS'li cihazlarda bile akıcı çalışmalı.
+
+---
+
+## 17. Günlük Hedefler, Seri (Streak) ve Rütbeler (Uygulandı)
+
+Çocuğu her gün en az birkaç dakika geri getirmek için üç parçalı bir motivasyon sistemi: her gün küçük, ulaşılabilir **hedefler** çıkar; hepsi tamamlanınca o gün **seri** (streak) bir artar; seri belirli eşiklere ulaştıkça matematik temalı **rütbeler** açılır. Bir gün hedefler tamamlanmazsa (veya gün tamamen atlanırsa) seri sıfırlanır.
+
+**Hedefler nasıl seçilir:** Sabit bir 5'lik havuzdan (`DailyGoalKind`), her gün **3 tanesi** tarihe göre sabit (deterministic) bir tohumla seçilir — aynı gün içinde uygulama kaç kez açılırsa açılsın hedefler aynı kalır, ertesi gün değişir. Havuzdaki her hedef, zaten var olan oyun sonucu alanlarından (skor, doğru sayısı, eşleşen çift, ulaşılan bölüm) beslenir — yeni bir oyun mekaniği gerektirmez:
+
+| Hedef | Hedef değeri | Nasıl ilerler |
+|---|---|---|
+| Bugün en az 2 oyun oyna | 2 | Her koşuda +1 (hangi mod olursa olsun) |
+| Bugün toplam 150 puan topla | 150 | Her koşunun skoru toplanır (hangi mod olursa olsun) |
+| Sayı Avı'nda 15 doğru cevap ver | 15 | Sayı Avı koşularının `correctCount` toplamı |
+| Eşleştirme'de 10 çift bul | 10 | Eşleştirme koşularının `matchedPairs` toplamı |
+| Tırmanış'ta 10. bölüme ulaş | 10 | Tek bir Tırmanış koşusunda ulaşılan en yüksek `round` (toplanmaz, en iyisi tutulur) |
+
+**İlerleme takibi:** Canlı (oyun içi anlık) takip yoktur — her modun `onGameEnd` sonucu (`GameResult`/`MatchGameResult`/`ClimbGameResult`), oyun bitince tek seferde günün ilerlemesine eklenir (bkz. `DailyGoalsService.recordHuntResult`/`recordMatchResult`/`recordClimbResult`, çağrıldığı yer: her oyun ekranının `_handleGameEnd`'i).
+
+**Seri (streak) mantığı:** Günün 3 hedefi de tamamlanınca `lastCompletedDate = bugün` yazılır ve seri bir artar (dünden devam ediyorsa) veya 1'e sıfırlanıp yeniden başlar (bir gün atlanmışsa). Ayrı bir arka plan görevi veya bildirim yoktur — kontrol tamamen pasif: uygulama her açıldığında (veya bir oyun sonucu kaydedildiğinde), bugünün tarihiyle son tamamlanan gün karşılaştırılır; aradan bir günden fazla geçmişse (dün tamamlanmamışsa) seri sıfırlanır.
+
+**Rütbeler:** Seri uzunluğuna bağlı bir merdiven (`rankForStreak`):
+
+| Seri (gün) | Rütbe |
+|---|---|
+| 0-2 | Sayı Çırağı |
+| 3-6 | Toplama Ustası |
+| 7-13 | Çarpım Kahramanı |
+| 14-29 | Bölme Büyücüsü |
+| 30+ | Matematik Dahisi |
+
+Rütbe, seri sıfırlanınca da en baştaki seviyeye düşer (ayrı bir "en yüksek ulaşılan rütbe" onur listesi tutulmaz — bu bilinçli bir MVP kapsam kararı, bkz. Bölüm 15).
+
+**Kurallar:**
+- Aynı gün içinde hedefler tamamlandıktan sonra oynanmaya devam edilirse seri tekrar işlenmez (yanlışlıkla sıfırlanıp 1'e düşmesin diye — bkz. `DailyGoalsService._checkStreakCompletion`).
+- Uygulamanın ilk hiç açılışında (henüz kayıtlı tarih yoksu) seri bayatlık kontrolü atlanır, hedefler 0'dan başlar.
+- Bu sistem üç modu da (Sayı Avı, Eşleştirme, Tırmanış) kapsar; hiçbiri diğerinden ayrıcalıklı değildir.
+
+**Uygulama:** `lib/models/daily_goal.dart` (`DailyGoalKind`, `DailyGoalProgress`, `DailyRank`, `rankForStreak`), `lib/services/daily_goals_service.dart` (`DailyGoalsService`, `DailyGoalsSnapshot`), ekran `lib/screens/daily_goals_screen.dart` (`DailyGoalsScreen`) ve Ana Menü'deki seri rozeti `lib/screens/main_menu_screen.dart` içindeki `_StreakBanner`. Üç oyun ekranı (`game_screen.dart`, `match_game_screen.dart`, `climb_game_screen.dart`) `_handleGameEnd` içinde ilgili `recordXResult` çağrısını yapar.
 
 ---

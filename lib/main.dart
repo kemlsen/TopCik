@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'screens/main_menu_screen.dart';
 import 'services/app_messenger.dart';
 import 'services/audio_service.dart';
+import 'services/daily_goals_service.dart';
 import 'services/score_service.dart';
 import 'theme/app_colors.dart';
 
@@ -20,6 +21,7 @@ class TopCikApp extends StatefulWidget {
 class _TopCikAppState extends State<TopCikApp> {
   final AudioService _audioService = AudioService();
   final ScoreService _scoreService = ScoreService();
+  final DailyGoalsService _dailyGoalsService = DailyGoalsService();
   bool _ready = false;
 
   @override
@@ -55,6 +57,7 @@ class _TopCikAppState extends State<TopCikApp> {
           ? MainMenuScreen(
               audioService: _audioService,
               scoreService: _scoreService,
+              dailyGoalsService: _dailyGoalsService,
             )
           : const _SplashScreen(),
     );

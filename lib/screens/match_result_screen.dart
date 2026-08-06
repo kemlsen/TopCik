@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../logic/match_game_controller.dart';
 import '../services/audio_service.dart';
+import '../services/daily_goals_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_symbols_background.dart';
@@ -12,12 +13,14 @@ class MatchResultScreen extends StatelessWidget {
   final MatchGameResult result;
   final AudioService audioService;
   final ScoreService scoreService;
+  final DailyGoalsService dailyGoalsService;
 
   const MatchResultScreen({
     super.key,
     required this.result,
     required this.audioService,
     required this.scoreService,
+    required this.dailyGoalsService,
   });
 
   @override
@@ -120,6 +123,7 @@ class MatchResultScreen extends StatelessWidget {
                                       operations: result.operations,
                                       audioService: audioService,
                                       scoreService: scoreService,
+                                      dailyGoalsService: dailyGoalsService,
                                     ),
                                   ),
                                 );
@@ -151,6 +155,7 @@ class MatchResultScreen extends StatelessWidget {
                                     builder: (_) => MainMenuScreen(
                                       audioService: audioService,
                                       scoreService: scoreService,
+                                      dailyGoalsService: dailyGoalsService,
                                     ),
                                   ),
                                   (route) => false,

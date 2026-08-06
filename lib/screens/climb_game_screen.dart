@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../logic/climb_game_controller.dart';
 import '../services/audio_service.dart';
+import '../services/daily_goals_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/climb_status_widget.dart';
@@ -17,11 +18,13 @@ import 'climb_result_screen.dart';
 class ClimbGameScreen extends StatefulWidget {
   final AudioService audioService;
   final ScoreService scoreService;
+  final DailyGoalsService dailyGoalsService;
 
   const ClimbGameScreen({
     super.key,
     required this.audioService,
     required this.scoreService,
+    required this.dailyGoalsService,
   });
 
   @override
@@ -46,12 +49,14 @@ class _ClimbGameScreenState extends State<ClimbGameScreen> {
   void _handleGameEnd(ClimbGameResult result) {
     if (_navigatedToResult || !mounted) return;
     _navigatedToResult = true;
+    widget.dailyGoalsService.recordClimbResult(result);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => ClimbResultScreen(
           result: result,
           audioService: widget.audioService,
           scoreService: widget.scoreService,
+          dailyGoalsService: widget.dailyGoalsService,
         ),
       ),
     );

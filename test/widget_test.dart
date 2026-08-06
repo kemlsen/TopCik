@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mathgrid/screens/main_menu_screen.dart';
 import 'package:mathgrid/services/audio_service.dart';
+import 'package:mathgrid/services/daily_goals_service.dart';
 import 'package:mathgrid/services/score_service.dart';
 
 void main() {
@@ -17,6 +18,7 @@ void main() {
         home: MainMenuScreen(
           audioService: AudioService(),
           scoreService: ScoreService(),
+          dailyGoalsService: DailyGoalsService(),
         ),
       ),
     );

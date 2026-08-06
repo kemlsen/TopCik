@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../models/daily_goal.dart';
 import '../models/game_mode.dart';
 import '../services/audio_service.dart';
+import '../services/daily_goals_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_symbols_background.dart';
 import '../widgets/math_logo_emblem.dart';
 import 'climb_game_screen.dart';
+import 'daily_goals_screen.dart';
 import 'game_screen.dart';
 import 'match_game_screen.dart';
 import 'mode_select_screen.dart';
@@ -16,11 +19,13 @@ import 'settings_screen.dart';
 class MainMenuScreen extends StatelessWidget {
   final AudioService audioService;
   final ScoreService scoreService;
+  final DailyGoalsService dailyGoalsService;
 
   const MainMenuScreen({
     super.key,
     required this.audioService,
     required this.scoreService,
+    required this.dailyGoalsService,
   });
 
   /// "Oyna": Mod Seç ekranında (veya bir önceki oyunda) bırakılan mod +
@@ -35,6 +40,7 @@ class MainMenuScreen extends StatelessWidget {
           builder: (_) => ClimbGameScreen(
             audioService: audioService,
             scoreService: scoreService,
+            dailyGoalsService: dailyGoalsService,
           ),
         ),
       );
@@ -52,12 +58,14 @@ class MainMenuScreen extends StatelessWidget {
                 operations: operations,
                 audioService: audioService,
                 scoreService: scoreService,
+                dailyGoalsService: dailyGoalsService,
               )
             : MatchGameScreen(
                 level: level,
                 operations: operations,
                 audioService: audioService,
                 scoreService: scoreService,
+                dailyGoalsService: dailyGoalsService,
               ),
       ),
     );
@@ -101,7 +109,9 @@ class MainMenuScreen extends StatelessWidget {
                             color: Colors.white70,
                           ),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 20),
+                        _StreakBanner(dailyGoalsService: dailyGoalsService),
+                        const SizedBox(height: 20),
                         _MenuButton(
                           label: 'Oyna',
                           icon: Icons.play_arrow_rounded,
@@ -118,6 +128,7 @@ class MainMenuScreen extends StatelessWidget {
                               builder: (_) => ModeSelectScreen(
                                 audioService: audioService,
                                 scoreService: scoreService,
+                                dailyGoalsService: dailyGoalsService,
                               ),
                             ),
                           ),
@@ -155,6 +166,67 @@ class MainMenuScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Ana Menü'deki seri/rütbe rozeti (bkz. CLAUDE.md Bölüm 17). Dokununca
+/// `DailyGoalsScreen`'i açar; oradaki verinin aynısını `FutureBuilder` ile
+/// önden gösterir (Skor Tablosu'ndaki seviye kartlarıyla aynı desen).
+class _StreakBanner extends StatelessWidget {
+  final DailyGoalsService dailyGoalsService;
+
+  const _StreakBanner({required this.dailyGoalsService});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DailyGoalsSnapshot>(
+      future: dailyGoalsService.getTodaySnapshot(),
+      builder: (context, snapshot) {
+        final data = snapshot.data;
+        return Material(
+          color: Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(18),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    DailyGoalsScreen(dailyGoalsService: dailyGoalsService),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 12,
+              ),
+              child: Row(
+                children: [
+                  const Text('🔥', style: TextStyle(fontSize: 24)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      data == null
+                          ? 'Günlük Hedefler'
+                          : '${data.streak} gün — ${data.rank.displayName}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.white70,
+                    size: 22,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

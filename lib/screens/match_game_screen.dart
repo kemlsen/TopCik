@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../logic/match_game_controller.dart';
 import '../models/difficulty_level.dart';
 import '../services/audio_service.dart';
+import '../services/daily_goals_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/gradient_scaffold.dart';
@@ -20,6 +21,7 @@ class MatchGameScreen extends StatefulWidget {
   final Set<Operation> operations;
   final AudioService audioService;
   final ScoreService scoreService;
+  final DailyGoalsService dailyGoalsService;
 
   const MatchGameScreen({
     super.key,
@@ -27,6 +29,7 @@ class MatchGameScreen extends StatefulWidget {
     required this.operations,
     required this.audioService,
     required this.scoreService,
+    required this.dailyGoalsService,
   });
 
   @override
@@ -53,12 +56,14 @@ class _MatchGameScreenState extends State<MatchGameScreen> {
   void _handleGameEnd(MatchGameResult result) {
     if (_navigatedToResult || !mounted) return;
     _navigatedToResult = true;
+    widget.dailyGoalsService.recordMatchResult(result);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => MatchResultScreen(
           result: result,
           audioService: widget.audioService,
           scoreService: widget.scoreService,
+          dailyGoalsService: widget.dailyGoalsService,
         ),
       ),
     );
