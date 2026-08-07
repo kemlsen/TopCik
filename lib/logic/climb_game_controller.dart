@@ -57,8 +57,8 @@ class ClimbGameController extends GridPlayable {
   final ProblemGenerator _generator;
   final Random _random;
 
-  static const int initialTimeBudgetSeconds = 45;
-  static const int timeBonusPerCorrectSeconds = 3;
+  static const int initialTimeBudgetSeconds = 60;
+  static const int timeBonusPerCorrectSeconds = 1;
 
   @override
   late List<GridCell> cells;

@@ -113,7 +113,8 @@ class _MatchGameScreenState extends State<MatchGameScreen> {
                             TimerWidget(
                               remainingSeconds:
                                   _controller.timeRemainingSeconds,
-                              totalSeconds: widget.level.timeLimitSeconds,
+                              totalSeconds:
+                                  MatchGameController.initialTimeBudgetSeconds,
                             ),
                             Expanded(
                               child: Center(

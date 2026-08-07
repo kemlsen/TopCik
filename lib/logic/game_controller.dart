@@ -40,9 +40,9 @@ class GameResult {
 /// Bölüm 2): grid boyutu seçilen [level]'e göre sabittir (bkz.
 /// [gridShapeForLevel]), doğru cevap bulununca tüm grid anında yenilenir
 /// (tek hücre boşaltıp aynı gridde devam etmez), ve tek bir eriyen süre
-/// sayacı (45 sn) her doğru cevapta küçük bir bonusla beslenir. Tırmanış'tan
+/// sayacı (60 sn) her doğru cevapta küçük bir bonusla beslenir. Tırmanış'tan
 /// farkı, bölüm bölüm otomatik ilerleme yerine seviye/işlem türünün
-/// oyuncu tarafından seçilebilir kalması — "45 saniyede kaç tane
+/// oyuncu tarafından seçilebilir kalması — "60 saniyede kaç tane
 /// yapabilirsin" modu.
 class GameController extends GridPlayable {
   GameController({
@@ -68,8 +68,8 @@ class GameController extends GridPlayable {
   final ProblemGenerator _generator;
   final Random _random;
 
-  static const int initialTimeBudgetSeconds = 45;
-  static const int timeBonusPerCorrectSeconds = 3;
+  static const int initialTimeBudgetSeconds = 60;
+  static const int timeBonusPerCorrectSeconds = 1;
 
   @override
   late List<GridCell> cells;

@@ -60,7 +60,8 @@ class MatchGameController extends GridPlayable {
   final ScoreService _scoreService;
   final ProblemGenerator _generator;
 
-  static const int timeBonusPerCorrectSeconds = 3;
+  static const int timeBonusPerCorrectSeconds = 1;
+  static const int initialTimeBudgetSeconds = 60;
 
   int get totalPairs => matchGridShapeForLevel(level).pairCount;
 
@@ -110,7 +111,7 @@ class MatchGameController extends GridPlayable {
     firstIndex = null;
     wrongPair = null;
     status = GameStatus.playing;
-    timeRemainingSeconds = level.timeLimitSeconds;
+    timeRemainingSeconds = initialTimeBudgetSeconds;
     _generateGrid();
 
     _timer?.cancel();

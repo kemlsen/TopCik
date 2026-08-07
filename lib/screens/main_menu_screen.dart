@@ -287,17 +287,8 @@ class _MenuMascot extends StatefulWidget {
 }
 
 class _MenuMascotState extends State<_MenuMascot> {
-  static const _greetings = [
-    'Merhaba! 👋',
-    'Hadi oynayalım! 🎉',
-    'Bugün ne kadar hızlısın? ⚡',
-    'Seni bekliyorum! 🦉',
-  ];
-
   MascotMood _mood = MascotMood.idle;
-  int _greetingIndex = 0;
   Timer? _hopTimer;
-  Timer? _greetingTimer;
 
   @override
   void initState() {
@@ -309,73 +300,16 @@ class _MenuMascotState extends State<_MenuMascot> {
         if (mounted) setState(() => _mood = MascotMood.idle);
       });
     });
-    _greetingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted) return;
-      setState(() => _greetingIndex = (_greetingIndex + 1) % _greetings.length);
-    });
   }
 
   @override
   void dispose() {
     _hopTimer?.cancel();
-    _greetingTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: _SpeechBubble(
-            key: ValueKey(_greetingIndex),
-            text: _greetings[_greetingIndex],
-          ),
-        ),
-        const SizedBox(height: 6),
-        MascotWidget(mood: _mood, size: 118),
-      ],
-    );
-  }
-}
-
-class _SpeechBubble extends StatelessWidget {
-  const _SpeechBubble({super.key, required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primaryDark,
-            ),
-          ),
-        ),
-        Transform.rotate(
-          angle: 0.785398, // 45 derece — konuşma balonu kuyruğu
-          child: Container(width: 10, height: 10, color: Colors.white),
-        ),
-      ],
-    );
+    return MascotWidget(mood: _mood, size: 118);
   }
 }
