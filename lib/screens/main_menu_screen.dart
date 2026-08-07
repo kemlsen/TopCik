@@ -130,7 +130,6 @@ class MainMenuScreen extends StatelessWidget {
                               builder: (_) => ModeSelectScreen(
                                 audioService: audioService,
                                 scoreService: scoreService,
-                                dailyGoalsService: dailyGoalsService,
                               ),
                             ),
                           ),

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../models/game_mode.dart';
+import '../services/app_messenger.dart';
 import '../services/audio_service.dart';
-import '../services/daily_goals_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/gradient_scaffold.dart';
-import 'climb_game_screen.dart';
 import 'level_select_screen.dart';
 
 /// Tırmanış ana oyun modu olduğu için ekranda ilk sırada gösterilir.
@@ -30,31 +29,25 @@ const _modeIcons = {
 class ModeSelectScreen extends StatelessWidget {
   final AudioService audioService;
   final ScoreService scoreService;
-  final DailyGoalsService dailyGoalsService;
 
   const ModeSelectScreen({
     super.key,
     required this.audioService,
     required this.scoreService,
-    required this.dailyGoalsService,
   });
 
-  /// Tırmanış modu Seviye Seç / İşlem Türü Seç akışını atlar ve doğrudan
-  /// oyuna girer, bu yüzden "son oynanan mod" kaydını (diğer modlarda
-  /// `LevelSelectScreen._startLevel` içinde yapılan işi) burada kendisi
-  /// yapmalı.
+  /// Tırmanış modu Seviye Seç / İşlem Türü Seç akışını atlar (grid boyutu ve
+  /// zorluk bölüm numarasına göre otomatik belirlendiği için), bu yüzden
+  /// burada sadece "son oynanan mod" olarak kaydedilip Ana Menü'ye dönülür —
+  /// diğer modlar gibi oyun buradan başlamaz, Ana Menü'deki "Oyna" butonuna
+  /// basılınca başlar (bkz. `MainMenuScreen._quickPlay`).
   Future<void> _handleModeTap(BuildContext context, GameMode mode) async {
     if (mode == GameMode.climb) {
       await scoreService.setLastMode(mode);
       if (!context.mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => ClimbGameScreen(
-            audioService: audioService,
-            scoreService: scoreService,
-            dailyGoalsService: dailyGoalsService,
-          ),
-        ),
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      scaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(content: Text('Hazır! Başlamak için "Oyna"ya dokun 🎮')),
       );
       return;
     }
