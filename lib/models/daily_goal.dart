@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show IconData, Icons;
+import 'package:flutter/material.dart' show Color, IconData, Icons;
 
 /// Günlük hedef havuzu (bkz. CLAUDE.md Bölüm 17). Her gün bu havuzdan 3
 /// tanesi tarihe göre sabit (deterministic) bir şekilde seçilir — bkz.
@@ -106,6 +106,57 @@ extension DailyRankInfo on DailyRank {
         return 30;
       case DailyRank.mathGenius:
         return null;
+    }
+  }
+
+  /// Bu rütbeye ulaşmak için gereken minimum seri (gün) — `rankForStreak`
+  /// ile birebir aynı eşikler, rütbe yolu (bkz. `DailyGoalsScreen`) bu
+  /// değeri her rütbenin "kaç günde açılır" bilgisini göstermek için kullanır.
+  int get requiredStreak {
+    switch (this) {
+      case DailyRank.apprentice:
+        return 0;
+      case DailyRank.additionMaster:
+        return 3;
+      case DailyRank.multiplicationHero:
+        return 7;
+      case DailyRank.divisionWizard:
+        return 14;
+      case DailyRank.mathGenius:
+        return 30;
+    }
+  }
+
+  /// Rütbeyi tek bakışta tanınır kılan maskot emojisi (bkz. `_RankLadderCard`).
+  String get emoji {
+    switch (this) {
+      case DailyRank.apprentice:
+        return '🔰';
+      case DailyRank.additionMaster:
+        return '➕';
+      case DailyRank.multiplicationHero:
+        return '✖️';
+      case DailyRank.divisionWizard:
+        return '🧙';
+      case DailyRank.mathGenius:
+        return '👑';
+    }
+  }
+
+  /// Seviye kartlarıyla aynı renk mantığı (kolay→uzman ilerleyişi), en üst
+  /// rütbe altın rengiyle öne çıkar.
+  Color get color {
+    switch (this) {
+      case DailyRank.apprentice:
+        return const Color(0xFF22C3A6);
+      case DailyRank.additionMaster:
+        return const Color(0xFF3B9CF2);
+      case DailyRank.multiplicationHero:
+        return const Color(0xFFFF8A4C);
+      case DailyRank.divisionWizard:
+        return const Color(0xFF9B6BF2);
+      case DailyRank.mathGenius:
+        return const Color(0xFFFFB020);
     }
   }
 }

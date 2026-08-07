@@ -29,6 +29,8 @@ class DailyGoalsScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
             children: [
               _StreakCard(streak: data.streak, rank: data.rank),
+              const SizedBox(height: 16),
+              _RankLadderCard(currentRank: data.rank),
               const SizedBox(height: 24),
               const Text(
                 'Bugünün hedefleri',
@@ -95,7 +97,7 @@ class _StreakCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    rank.displayName,
+                    '${rank.emoji} ${rank.displayName}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -117,6 +119,140 @@ class _StreakCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Tüm rütbeleri, hangilerinin açıldığını ve şu an hangisinde olunduğunu
+/// tek bakışta gösteren dikey "yol" — kullanıcı sadece mevcut rütbesini
+/// değil, önünde neler olduğunu görüp hırslansın diye (bkz. kullanıcı
+/// isteği: diğer rütbeler bilinmeyince motivasyon eksik kalıyordu).
+class _RankLadderCard extends StatelessWidget {
+  final DailyRank currentRank;
+
+  const _RankLadderCard({required this.currentRank});
+
+  @override
+  Widget build(BuildContext context) {
+    final ranks = DailyRank.values;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Rütbe Yolu',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 12),
+            for (var i = 0; i < ranks.length; i++)
+              _RankLadderRow(
+                rank: ranks[i],
+                isLast: i == ranks.length - 1,
+                isCurrent: ranks[i] == currentRank,
+                isUnlocked: ranks[i].requiredStreak <= currentRank.requiredStreak,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RankLadderRow extends StatelessWidget {
+  final DailyRank rank;
+  final bool isLast;
+  final bool isCurrent;
+  final bool isUnlocked;
+
+  const _RankLadderRow({
+    required this.rank,
+    required this.isLast,
+    required this.isCurrent,
+    required this.isUnlocked,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final circleColor = isUnlocked ? rank.color : Colors.black12;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: circleColor,
+                  shape: BoxShape.circle,
+                  border: isCurrent
+                      ? Border.all(color: AppColors.gold, width: 3)
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: isUnlocked
+                    ? Text(rank.emoji, style: const TextStyle(fontSize: 20))
+                    : const Icon(
+                        Icons.lock_rounded,
+                        color: Colors.black38,
+                        size: 20,
+                      ),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 2),
+                    color: isUnlocked ? rank.color.withValues(alpha: 0.35) : Colors.black12,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 18, top: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    rank.displayName,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: isUnlocked ? Colors.black87 : Colors.black45,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isCurrent
+                        ? 'Şu an buradasın'
+                        : rank.requiredStreak == 0
+                            ? 'Başlangıç rütbesi'
+                            : '${rank.requiredStreak} günlük seride açılır',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                      color: isCurrent ? AppColors.gold : Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isUnlocked && !isCurrent)
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
+            ),
+        ],
       ),
     );
   }
