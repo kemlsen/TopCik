@@ -165,7 +165,7 @@ Yaş grubuna göre işlem havuzu ayarlanmalı. Zorluk arttıkça:
 - **Yanlış cevap animasyonu:** Hücre kırmızıya boyanır → shake (sallanma) efekti → "Yanlış!" texti belirip kaybolur → hücre normale döner. Kısa "buzzer" sesi (ama fazla rahatsız edici olmamalı, çocuk dostu).
 - **Hedef sayı gösterimi:** Ekranın üstünde büyük, renkli, dikkat çekici bir kutu içinde (örn: "Bul: 12").
 - **Renk paleti:** Çocuklara hitap eden canlı, pastel-parlak renkler (mavi, sarı, turuncu, yeşil). Kırmızı sadece yanlış cevap için kullanılmalı.
-- **Karakter/Maskot (opsiyonel ama önerilir):** Basit bir maskot (örn. bir baykuş/robot) doğru/yanlış cevaplara tepki versin (mutlu zıplama / üzgün sallama).
+- **Karakter/Maskot (uygulandı):** Cik adında dost bir baykuş maskotu — sürekli hafifçe zıplayıp göz kırpar (idle), doğru cevapta sevinçle zıplayıp etrafına yıldız saçar (happy), yanlış cevapta üzülüp sallanır (sad). Üç oyun ekranında da (Sayı Avı, Eşleştirme, Tırmanış) grid'in sağ alt köşesinde belirir ve o modun `wrongIndex`/`wrongPair` ile `CellState.correct` durumundan türetilen ana anlık ruh haline tepki verir; sonuç ekranlarında `outOfLives`'a göre kalıcı happy/sad ifadesiyle görünür; Ana Menü'de ise arada bir kendiliğinden zıplayıp değişen bir karşılama balonuyla (bkz. `_MenuMascot`) karşılar. Saf vektör şekillerinden çizilir, görsel asset gerektirmez. Uygulama: `lib/widgets/mascot_widget.dart` (`MascotWidget`, `MascotMood`).
 - **Yüzen sembol arka planı (uygulandı):** Mor gradientli ekranlarda (Ana Menü, Sonuç Ekranları) içeriğin arkasında, çok düşük opaklıkta (≈%8-19) küçük `+ − × ÷` sembolleri yavaşça süzülür — hafif dikey/yatay sürüklenme + yumuşak dönüş, sabit rastgele tohumla (aynı dağılım her açılışta), tek bir sonsuz döngü `AnimationController` ile (sin/cos tabanlı, ek paket gerektirmez). Dokunma olaylarını engellememesi için `IgnorePointer` ile sarılıdır. Uygulama: `lib/widgets/floating_symbols_background.dart` (`FloatingSymbolsBackground`), `main_menu_screen.dart`, `result_screen.dart` ve `match_result_screen.dart` içinde gradient `Container`'ın `Stack` çocuğu olarak, `SafeArea` içeriğinin arkasında kullanılır.
 
 ---
@@ -249,6 +249,7 @@ lib/
     match_status_widget.dart    // Eşleştirme: "Kalan çift: 5"
     climb_status_widget.dart    // Tırmanış: "Bölüm: 7"
     lives_badge.dart            // üç mod da paylaşır
+    mascot_widget.dart          // maskot (Cik the owl) — üç mod + Ana Menü + sonuç ekranları paylaşır
   services/
     audio_service.dart
     score_service.dart      // yerel skor kaydı (shared_preferences), moda göre ayrı anahtar

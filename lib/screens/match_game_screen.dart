@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../logic/match_game_controller.dart';
 import '../models/difficulty_level.dart';
+import '../models/grid_cell.dart';
 import '../services/audio_service.dart';
 import '../services/daily_goals_service.dart';
 import '../services/score_service.dart';
@@ -9,6 +10,7 @@ import '../theme/app_colors.dart';
 import '../widgets/gradient_scaffold.dart';
 import '../widgets/grid_widget.dart';
 import '../widgets/lives_badge.dart';
+import '../widgets/mascot_widget.dart';
 import '../widgets/match_status_widget.dart';
 import '../widgets/timer_widget.dart';
 import 'match_result_screen.dart';
@@ -75,6 +77,14 @@ class _MatchGameScreenState extends State<MatchGameScreen> {
     super.dispose();
   }
 
+  MascotMood get _mascotMood {
+    if (_controller.wrongPair != null) return MascotMood.sad;
+    if (_controller.cells.any((c) => c.state == CellState.correct)) {
+      return MascotMood.happy;
+    }
+    return MascotMood.idle;
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -85,58 +95,71 @@ class _MatchGameScreenState extends State<MatchGameScreen> {
           dimmed:
               _controller.timeRemainingSeconds <= 10 &&
               _controller.timeRemainingSeconds > 0,
-          body: Column(
+          body: Stack(
+            clipBehavior: Clip.none,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        TimerWidget(
-                          remainingSeconds: _controller.timeRemainingSeconds,
-                          totalSeconds: widget.level.timeLimitSeconds,
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: MatchStatusWidget(
-                              matchedPairs: _controller.clearedPairsInGrid,
-                              totalPairs: _controller.totalPairs,
-                            ),
-                          ),
-                        ),
-                        _ScoreBadge(score: _controller.score),
-                      ],
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                    const SizedBox(height: 10),
-                    LivesBadge(livesRemaining: _controller.livesRemaining),
-                  ],
-                ),
-              ),
-              Expanded(child: GridWidget(controller: _controller)),
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: _controller.wrongPair != null ? 1.0 : 0.0,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    'Eşleşmedi! Tekrar dene 🙂',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: AppColors.error.withValues(alpha: 0.9),
-                          blurRadius: 10,
+                    child: Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            TimerWidget(
+                              remainingSeconds:
+                                  _controller.timeRemainingSeconds,
+                              totalSeconds: widget.level.timeLimitSeconds,
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: MatchStatusWidget(
+                                  matchedPairs: _controller.clearedPairsInGrid,
+                                  totalPairs: _controller.totalPairs,
+                                ),
+                              ),
+                            ),
+                            _ScoreBadge(score: _controller.score),
+                          ],
                         ),
+                        const SizedBox(height: 10),
+                        LivesBadge(livesRemaining: _controller.livesRemaining),
                       ],
                     ),
                   ),
+                  Expanded(child: GridWidget(controller: _controller)),
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _controller.wrongPair != null ? 1.0 : 0.0,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        'Eşleşmedi! Tekrar dene 🙂',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              color: AppColors.error.withValues(alpha: 0.9),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                right: 4,
+                bottom: 12,
+                child: IgnorePointer(
+                  child: MascotWidget(mood: _mascotMood, size: 76),
                 ),
               ),
             ],

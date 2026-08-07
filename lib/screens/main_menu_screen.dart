@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/daily_goal.dart';
@@ -7,7 +9,7 @@ import '../services/daily_goals_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_symbols_background.dart';
-import '../widgets/math_logo_emblem.dart';
+import '../widgets/mascot_widget.dart';
 import 'climb_game_screen.dart';
 import 'daily_goals_screen.dart';
 import 'game_screen.dart';
@@ -91,7 +93,7 @@ class MainMenuScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const MathLogoEmblem(size: 128),
+                        const _MenuMascot(),
                         const SizedBox(height: 6),
                         const Text(
                           'TopCik',
@@ -269,6 +271,111 @@ class _MenuButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Ana Menü'nün maskotu: sürekli hafifçe zıplayan (bkz. [MascotWidget] idle
+/// animasyonu) Cik, üstünde arada bir değişen neşeli bir karşılama balonuyla
+/// birlikte gösterilir; birkaç saniyede bir kendiliğinden sevinçle zıplar
+/// (Bölüm 8 — çocuklara hitap eden hareketli bir karakter).
+class _MenuMascot extends StatefulWidget {
+  const _MenuMascot();
+
+  @override
+  State<_MenuMascot> createState() => _MenuMascotState();
+}
+
+class _MenuMascotState extends State<_MenuMascot> {
+  static const _greetings = [
+    'Merhaba! 👋',
+    'Hadi oynayalım! 🎉',
+    'Bugün ne kadar hızlısın? ⚡',
+    'Seni bekliyorum! 🦉',
+  ];
+
+  MascotMood _mood = MascotMood.idle;
+  int _greetingIndex = 0;
+  Timer? _hopTimer;
+  Timer? _greetingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _hopTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted) return;
+      setState(() => _mood = MascotMood.happy);
+      Future.delayed(const Duration(milliseconds: 750), () {
+        if (mounted) setState(() => _mood = MascotMood.idle);
+      });
+    });
+    _greetingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted) return;
+      setState(() => _greetingIndex = (_greetingIndex + 1) % _greetings.length);
+    });
+  }
+
+  @override
+  void dispose() {
+    _hopTimer?.cancel();
+    _greetingTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _SpeechBubble(
+            key: ValueKey(_greetingIndex),
+            text: _greetings[_greetingIndex],
+          ),
+        ),
+        const SizedBox(height: 6),
+        MascotWidget(mood: _mood, size: 118),
+      ],
+    );
+  }
+}
+
+class _SpeechBubble extends StatelessWidget {
+  const _SpeechBubble({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primaryDark,
+            ),
+          ),
+        ),
+        Transform.rotate(
+          angle: 0.785398, // 45 derece — konuşma balonu kuyruğu
+          child: Container(width: 10, height: 10, color: Colors.white),
+        ),
+      ],
     );
   }
 }

@@ -4,6 +4,25 @@ import '../models/daily_goal.dart';
 import '../services/daily_goals_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/gradient_scaffold.dart';
+import '../widgets/mascot_widget.dart';
+
+/// Rütbe -> maskot kıyafeti eşlemesi (bkz. CLAUDE.md Bölüm 17 ve
+/// [MascotOutfit] doküman yorumu) — `DailyRank` enum sırasıyla birebir
+/// örtüşür.
+MascotOutfit _outfitForRank(DailyRank rank) {
+  switch (rank) {
+    case DailyRank.apprentice:
+      return MascotOutfit.none;
+    case DailyRank.additionMaster:
+      return MascotOutfit.cape;
+    case DailyRank.multiplicationHero:
+      return MascotOutfit.hero;
+    case DailyRank.divisionWizard:
+      return MascotOutfit.wizard;
+    case DailyRank.mathGenius:
+      return MascotOutfit.genius;
+  }
+}
 
 /// Günlük hedefler + seri (streak) + rütbe ekranı (bkz. CLAUDE.md Bölüm 17).
 /// Ana Menü'deki seri rozetinden açılır.
@@ -80,17 +99,25 @@ class _StreakCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       elevation: 3,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        // Üstte fazladan boşluk: bazı kıyafetler (büyücü şapkası, taç)
+        // maskotun kendi kutusunun üstüne taşar (bkz. MascotWidget içindeki
+        // Clip.none Stack'ler) — bu boşluk olmadan kartın üst kenarını aşabilir.
+        padding: const EdgeInsets.fromLTRB(20, 28, 20, 14),
         child: Row(
           children: [
-            const Text('🔥', style: TextStyle(fontSize: 40)),
-            const SizedBox(width: 16),
+            MascotWidget(
+              mood: MascotMood.happy,
+              size: 76,
+              outfit: _outfitForRank(rank),
+              outfitColor: rank.color,
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    streak == 1 ? '1 gün' : '$streak gün',
+                    streak == 1 ? '🔥 1 gün' : '🔥 $streak gün',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
@@ -190,20 +217,37 @@ class _RankLadderRow extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: circleColor,
                   shape: BoxShape.circle,
                   border: isCurrent
                       ? Border.all(color: AppColors.gold, width: 3)
                       : null,
                 ),
-                alignment: Alignment.center,
-                child: isUnlocked
-                    ? Text(rank.emoji, style: const TextStyle(fontSize: 20))
-                    : const Icon(
-                        Icons.lock_rounded,
-                        color: Colors.black38,
-                        size: 20,
-                      ),
+                // Maskotun kendi kutusu dairenin dışına taşabilir (bkz.
+                // MascotWidget'ın Clip.none Stack'leri, örn. büyücü
+                // şapkası) — ClipOval bunu tıpkı yuvarlak bir profil
+                // fotoğrafı gibi daire sınırında kırpar, kıyafeti tanınır
+                // kılan gövde/rozet kısmı hep görünür kalır.
+                child: ClipOval(
+                  child: Container(
+                    color: circleColor,
+                    alignment: Alignment.center,
+                    child: isUnlocked
+                        ? Transform.translate(
+                            offset: const Offset(0, 8),
+                            child: MascotWidget(
+                              mood: MascotMood.idle,
+                              size: 40,
+                              outfit: _outfitForRank(rank),
+                              outfitColor: rank.color,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.lock_rounded,
+                            color: Colors.black38,
+                            size: 20,
+                          ),
+                  ),
+                ),
               ),
               if (!isLast)
                 Expanded(

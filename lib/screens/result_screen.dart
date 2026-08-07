@@ -6,6 +6,7 @@ import '../services/daily_goals_service.dart';
 import '../services/score_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/floating_symbols_background.dart';
+import '../widgets/mascot_widget.dart';
 import 'game_screen.dart';
 import 'main_menu_screen.dart';
 
@@ -46,6 +47,13 @@ class ResultScreen extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          MascotWidget(
+                            mood: result.outOfLives
+                                ? MascotMood.sad
+                                : MascotMood.happy,
+                            size: 108,
+                          ),
+                          const SizedBox(height: 8),
                           Text(
                             title,
                             style: const TextStyle(
